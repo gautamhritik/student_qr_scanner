@@ -1,0 +1,15 @@
+{
+  "scan_id": "2999b5fdb4484f9aaf1e69e09c3b2a0b",
+  "scanned_at": "2026-06-10T19:38:08+05:30",
+  "date": "2026-06-10",
+  "time": "19:38:08",
+  "detection_method": "upscaled-contrast",
+  "qr_info": {
+    "name": "Aarav Mehta",
+    "class": "8A",
+    "roll_no": 11,
+    "age": 13,
+    "class_teacher": "Mrs. Kavita Sharma"
+  },
+  "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-38-08+05-30_aarav_mehta_2999b5fd.json"
+}

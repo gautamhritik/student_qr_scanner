@@ -1,0 +1,331 @@
+[
+  {
+    "scan_id": "6ce0d149bc4a46e4a0001fe04b15ef25",
+    "scanned_at": "2026-06-09T11:46:32+05:30",
+    "date": "2026-06-09",
+    "time": "11:46:32",
+    "detection_method": "adaptive-threshold",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-09T11-46-32+05-30_aarav_mehta_6ce0d149.json"
+  },
+  {
+    "scan_id": "8ed29de3730d4727b8bf34272ffdbdfa",
+    "scanned_at": "2026-06-09T11:46:43+05:30",
+    "date": "2026-06-09",
+    "time": "11:46:43",
+    "detection_method": "original",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-09T11-46-43+05-30_aarav_mehta_8ed29de3.json"
+  },
+  {
+    "scan_id": "78acc10610f04134ae5dda984c25c47e",
+    "scanned_at": "2026-06-09T11:46:48+05:30",
+    "date": "2026-06-09",
+    "time": "11:46:48",
+    "detection_method": "original",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-09T11-46-48+05-30_aarav_mehta_78acc106.json"
+  },
+  {
+    "scan_id": "2999b5fdb4484f9aaf1e69e09c3b2a0b",
+    "scanned_at": "2026-06-10T19:38:08+05:30",
+    "date": "2026-06-10",
+    "time": "19:38:08",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-38-08+05-30_aarav_mehta_2999b5fd.json"
+  },
+  {
+    "scan_id": "6ed1e0c759104a268a9044eda3a8307b",
+    "scanned_at": "2026-06-10T19:38:11+05:30",
+    "date": "2026-06-10",
+    "time": "19:38:11",
+    "detection_method": "original",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-38-11+05-30_aarav_mehta_6ed1e0c7.json"
+  },
+  {
+    "scan_id": "808e91bfd6d949da96fc546cfd779987",
+    "scanned_at": "2026-06-10T19:38:24+05:30",
+    "date": "2026-06-10",
+    "time": "19:38:24",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-38-24+05-30_aarav_mehta_808e91bf.json"
+  },
+  {
+    "scan_id": "2f620c8ac79f49faa45a182d0a77ff34",
+    "scanned_at": "2026-06-10T19:38:28+05:30",
+    "date": "2026-06-10",
+    "time": "19:38:28",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-38-28+05-30_aarav_mehta_2f620c8a.json"
+  },
+  {
+    "scan_id": "ce4332efb01f4d99ba76dc48b479057d",
+    "scanned_at": "2026-06-10T19:39:35+05:30",
+    "date": "2026-06-10",
+    "time": "19:39:35",
+    "detection_method": "adaptive-threshold",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-39-35+05-30_aarav_mehta_ce4332ef.json"
+  },
+  {
+    "scan_id": "d835b3f849e344f8963bd4e3488f73c3",
+    "scanned_at": "2026-06-10T19:39:54+05:30",
+    "date": "2026-06-10",
+    "time": "19:39:54",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-39-54+05-30_aarav_mehta_d835b3f8.json"
+  },
+  {
+    "scan_id": "82af0b6ea0b04b6ea270537e478ac4b2",
+    "scanned_at": "2026-06-10T19:39:59+05:30",
+    "date": "2026-06-10",
+    "time": "19:39:59",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-39-59+05-30_aarav_mehta_82af0b6e.json"
+  },
+  {
+    "scan_id": "be86853723c84e87a1d671b4ff8929f4",
+    "scanned_at": "2026-06-10T19:40:02+05:30",
+    "date": "2026-06-10",
+    "time": "19:40:02",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-40-02+05-30_aarav_mehta_be868537.json"
+  },
+  {
+    "scan_id": "3461ead1240648f381ed3027ae8b73e8",
+    "scanned_at": "2026-06-10T19:41:00+05:30",
+    "date": "2026-06-10",
+    "time": "19:41:00",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-41-00+05-30_aarav_mehta_3461ead1.json"
+  },
+  {
+    "scan_id": "e4bfe15dff8b4081934437f6ae8800c8",
+    "scanned_at": "2026-06-10T19:41:03+05:30",
+    "date": "2026-06-10",
+    "time": "19:41:03",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-41-03+05-30_aarav_mehta_e4bfe15d.json"
+  },
+  {
+    "scan_id": "a04aea57ff844118a92c215a9f3e353e",
+    "scanned_at": "2026-06-10T19:41:06+05:30",
+    "date": "2026-06-10",
+    "time": "19:41:06",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-41-06+05-30_aarav_mehta_a04aea57.json"
+  },
+  {
+    "scan_id": "024ce285148c48c39961814529b609f9",
+    "scanned_at": "2026-06-10T19:41:10+05:30",
+    "date": "2026-06-10",
+    "time": "19:41:10",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-41-10+05-30_aarav_mehta_024ce285.json"
+  },
+  {
+    "scan_id": "679fae9a3d7f4501a85fb3ab0b4067fd",
+    "scanned_at": "2026-06-10T19:41:14+05:30",
+    "date": "2026-06-10",
+    "time": "19:41:14",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-41-14+05-30_aarav_mehta_679fae9a.json"
+  },
+  {
+    "scan_id": "f86079732afd4c16b7e5047cb2b5db18",
+    "scanned_at": "2026-06-10T19:47:55+05:30",
+    "date": "2026-06-10",
+    "time": "19:47:55",
+    "detection_method": "contrast-normalized",
+    "qr_info": {
+      "raw_payload": "upi://pay?pa=9794581201-2@axl&pn=RAHUL%20KUMAR%20BIND&mc=0000&mode=02&purpose=00"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-47-55+05-30_unknown_student_f8607973.json"
+  },
+  {
+    "scan_id": "13100b2ad865484fb638342d0cfb5342",
+    "scanned_at": "2026-06-10T19:47:58+05:30",
+    "date": "2026-06-10",
+    "time": "19:47:58",
+    "detection_method": "original",
+    "qr_info": {
+      "raw_payload": "upi://pay?pa=9794581201-2@axl&pn=RAHUL%20KUMAR%20BIND&mc=0000&mode=02&purpose=00"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-47-58+05-30_unknown_student_13100b2a.json"
+  },
+  {
+    "scan_id": "2df6853c1b474eaa9ee035e5dd302732",
+    "scanned_at": "2026-06-10T20:08:01+05:30",
+    "date": "2026-06-10",
+    "time": "20:08:01",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "raw_payload": "upi://pay?pa=9794581201-2@axl&pn=RAHUL%20KUMAR%20BIND&mc=0000&mode=02&purpose=00"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T20-08-01+05-30_unknown_student_2df6853c.json"
+  },
+  {
+    "scan_id": "7899c4ee21814daaa00d3a301c898482",
+    "scanned_at": "2026-06-10T20:08:04+05:30",
+    "date": "2026-06-10",
+    "time": "20:08:04",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "raw_payload": "upi://pay?pa=9794581201-2@axl&pn=RAHUL%20KUMAR%20BIND&mc=0000&mode=02&purpose=00"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T20-08-04+05-30_unknown_student_7899c4ee.json"
+  },
+  {
+    "scan_id": "92f31050bd72410e8b6576e2d3de18f1",
+    "scanned_at": "2026-06-10T20:08:49+05:30",
+    "date": "2026-06-10",
+    "time": "20:08:49",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T20-08-49+05-30_aarav_mehta_92f31050.json"
+  },
+  {
+    "scan_id": "84f017d62621414d99fb6013518f13d2",
+    "scanned_at": "2026-06-10T20:08:54+05:30",
+    "date": "2026-06-10",
+    "time": "20:08:54",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "name": "Aarav Mehta",
+      "class": "8A",
+      "roll_no": 11,
+      "age": 13,
+      "class_teacher": "Mrs. Kavita Sharma"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T20-08-54+05-30_aarav_mehta_84f017d6.json"
+  },
+  {
+    "scan_id": "28b9fdd894c34282acf3ab286f0d6c5a",
+    "scanned_at": "2026-06-10T20:09:59+05:30",
+    "date": "2026-06-10",
+    "time": "20:09:59",
+    "detection_method": "upscaled-contrast",
+    "qr_info": {
+      "name": "Ananya Nair",
+      "class": "6A",
+      "roll_no": 8,
+      "age": 11,
+      "class_teacher": "Mrs. Pooja Iyer"
+    },
+    "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T20-09-59+05-30_ananya_nair_28b9fdd8.json"
+  }
+]

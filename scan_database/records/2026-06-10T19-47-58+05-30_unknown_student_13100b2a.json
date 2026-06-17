@@ -1,0 +1,11 @@
+{
+  "scan_id": "13100b2ad865484fb638342d0cfb5342",
+  "scanned_at": "2026-06-10T19:47:58+05:30",
+  "date": "2026-06-10",
+  "time": "19:47:58",
+  "detection_method": "original",
+  "qr_info": {
+    "raw_payload": "upi://pay?pa=9794581201-2@axl&pn=RAHUL%20KUMAR%20BIND&mc=0000&mode=02&purpose=00"
+  },
+  "record_file": "C:\\Users\\gauta\\Projects\\student_qr_scanner\\scan_database\\records\\2026-06-10T19-47-58+05-30_unknown_student_13100b2a.json"
+}
