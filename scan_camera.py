@@ -19,9 +19,35 @@ def parse_camera(value: str):
         return value
 
 
+def configure_camera(cap, width: int, height: int, fps: int, autofocus: bool) -> None:
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+    cap.set(cv2.CAP_PROP_FPS, fps)
+
+    # These properties are camera-driver dependent. Unsupported cameras simply
+    # ignore them, but supported mobile/web cameras benefit from the hints.
+    cap.set(cv2.CAP_PROP_AUTOFOCUS, 1 if autofocus else 0)
+    cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.75)
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Scan student QR codes from a camera.")
     parser.add_argument("--camera", default="0", help="Camera index or stream URL.")
+    parser.add_argument("--width", type=int, default=1920, help="Requested camera width.")
+    parser.add_argument("--height", type=int, default=1080, help="Requested camera height.")
+    parser.add_argument("--fps", type=int, default=30, help="Requested camera FPS.")
+    parser.add_argument(
+        "--digital-zoom",
+        type=float,
+        default=1.0,
+        help="Center zoom for distant QR codes. Try 2.0 or 3.0 for long distance.",
+    )
+    parser.add_argument(
+        "--no-autofocus",
+        action="store_true",
+        help="Disable autofocus hint if your camera focuses better manually.",
+    )
     parser.add_argument(
         "--save-scans",
         action="store_true",
@@ -39,19 +65,25 @@ def main() -> None:
     if not cap.isOpened():
         raise SystemExit(f"Could not open camera: {args.camera}")
 
+    configure_camera(cap, args.width, args.height, args.fps, not args.no_autofocus)
     scanner = LightingAdaptiveQRScanner()
     database = ScanDatabase(ROOT / "scan_database")
     scans_dir = ROOT / "scans"
     scans_dir.mkdir(exist_ok=True)
     last_seen: dict[str, datetime] = {}
 
+    actual_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    actual_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     print("Scanner started. Hold a student QR in front of the camera. Press q to quit.")
+    print(f"Camera frame: {actual_width}x{actual_height}, digital zoom: {args.digital_zoom:g}x")
+    print("For 10m scanning, use a large printed QR and keep it centered in good focus.")
     while True:
         ok, frame = cap.read()
         if not ok:
             print("Could not read frame from camera.")
             break
 
+        frame = scanner.digital_zoom(frame, args.digital_zoom)
         result = scanner.detect(frame)
         if result:
             payload, points, method = result
@@ -68,6 +100,7 @@ def main() -> None:
                 print(f"\nDetected with {method}:")
                 print(format_payload(payload))
                 print(f"Saved scan record: {record['record_file']}")
+                print(scanner.estimate_distance_readiness(points, frame))
 
                 if args.save_scans:
                     timestamp = now.strftime("%Y%m%d_%H%M%S")
