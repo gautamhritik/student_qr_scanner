@@ -100,6 +100,7 @@ def main() -> None:
                 print(f"\nDetected with {method}:")
                 print(format_payload(payload))
                 print(f"Saved scan record: {record['record_file']}")
+                print(f"Total scans saved: {record['scan_number']}")
                 print(scanner.estimate_distance_readiness(points, frame))
 
                 if args.save_scans:

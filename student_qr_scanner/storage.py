@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from uuid import uuid4
 
 
@@ -16,6 +17,7 @@ class ScanDatabase:
         self.records_dir.mkdir(parents=True, exist_ok=True)
 
     def save_scan(self, payload: str, detection_method: str, scanned_at: datetime) -> dict:
+        history = self.load_history()
         record = {
             "scan_id": uuid4().hex,
             "scanned_at": scanned_at.isoformat(timespec="seconds"),
@@ -27,21 +29,25 @@ class ScanDatabase:
 
         record_path = self.records_dir / self._record_filename(record)
         record["record_file"] = str(record_path)
+        record["scan_number"] = len(history) + 1
 
         self._write_json(record_path, record)
-        self._append_history(record)
-        return record
-
-    def _append_history(self, record: dict) -> None:
-        history = []
-        if self.history_file.exists():
-            try:
-                history = json.loads(self.history_file.read_text(encoding="utf-8"))
-            except json.JSONDecodeError:
-                history = []
-
         history.append(record)
         self._write_json(self.history_file, history)
+        return record
+
+    def load_history(self) -> list[dict]:
+        if not self.history_file.exists():
+            return []
+
+        try:
+            history = json.loads(self.history_file.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return []
+
+        if isinstance(history, list):
+            return history
+        return []
 
     @staticmethod
     def _parse_payload(payload: str) -> dict:
@@ -65,4 +71,16 @@ class ScanDatabase:
     @staticmethod
     def _write_json(path: Path, data) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        content = json.dumps(data, ensure_ascii=False, indent=2)
+        with NamedTemporaryFile(
+            "w",
+            delete=False,
+            dir=path.parent,
+            encoding="utf-8",
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+        ) as temp_file:
+            temp_file.write(content)
+            temp_path = Path(temp_file.name)
+
+        temp_path.replace(path)

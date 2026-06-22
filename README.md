@@ -68,6 +68,9 @@ also printed in the terminal.
 - `scan_database/records/` stores one separate JSON file for each scan.
 - Each record includes scan date, scan time, detection method, and the QR student
   information.
+- JSON files are written atomically so an interrupted write is less likely to
+  corrupt the scan history.
+- The terminal shows the total number of saved scans after each accepted scan.
 
 The scanner uses a 3-second cooldown for the same QR by default so one QR held in
 front of the camera does not create many duplicate records. Change it with
