@@ -3,6 +3,8 @@
 This project creates 10 random student QR codes and provides a camera scanner that
 tries multiple lighting-aware image enhancement passes before decoding.
 
+Maintainer: Hritik Gautam <gautamhritik@gmail.com>
+
 ## Setup
 
 ```powershell
@@ -82,6 +84,5 @@ front of the camera does not create many duplicate records. Change it with
 The scanner uses OpenCV's QR detector, then retries decoding on many enhanced
 frames: center crops, grayscale, contrast normalization, gamma correction,
 denoising, thresholding, sharpening, multi-QR decoding, and upscaled versions of
-the camera frame. This is not a trained neural network; it is a practical
-AI-style computer-vision pipeline for reliable QR decoding under changing
-lighting and longer scanning distances.
+the camera frame. It is a practical computer-vision pipeline for reliable QR
+decoding under changing lighting and longer scanning distances.
