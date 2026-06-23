@@ -31,6 +31,17 @@ def configure_camera(cap, width: int, height: int, fps: int, autofocus: bool) ->
     cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
 
+def validate_args(args) -> None:
+    if args.width <= 0 or args.height <= 0:
+        raise SystemExit("--width and --height must be positive integers.")
+    if args.fps <= 0:
+        raise SystemExit("--fps must be a positive integer.")
+    if args.digital_zoom < 1.0:
+        raise SystemExit("--digital-zoom must be 1.0 or greater.")
+    if args.scan_cooldown < 0:
+        raise SystemExit("--scan-cooldown cannot be negative.")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Scan student QR codes from a camera.")
     parser.add_argument("--camera", default="0", help="Camera index or stream URL.")
@@ -59,7 +70,14 @@ def main() -> None:
         default=3.0,
         help="Seconds before the same QR can be logged again.",
     )
+    parser.add_argument(
+        "--database-dir",
+        type=Path,
+        default=ROOT / "scan_database",
+        help="Folder where JSON scan records are stored.",
+    )
     args = parser.parse_args()
+    validate_args(args)
 
     cap = cv2.VideoCapture(parse_camera(args.camera))
     if not cap.isOpened():
@@ -67,7 +85,7 @@ def main() -> None:
 
     configure_camera(cap, args.width, args.height, args.fps, not args.no_autofocus)
     scanner = LightingAdaptiveQRScanner()
-    database = ScanDatabase(ROOT / "scan_database")
+    database = ScanDatabase(args.database_dir)
     scans_dir = ROOT / "scans"
     scans_dir.mkdir(exist_ok=True)
     last_seen: dict[str, datetime] = {}

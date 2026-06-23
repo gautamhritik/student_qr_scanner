@@ -41,6 +41,7 @@ python scan_camera.py --camera "http://PHONE_IP:8080/video"
 python scan_camera.py --save-scans
 python scan_camera.py --scan-cooldown 5
 python scan_camera.py --width 3840 --height 2160 --digital-zoom 2
+python scan_camera.py --database-dir C:\path\to\scan_database
 ```
 
 Press `q` to close the scanner window.
@@ -74,7 +75,7 @@ also printed in the terminal.
 
 The scanner uses a 3-second cooldown for the same QR by default so one QR held in
 front of the camera does not create many duplicate records. Change it with
-`--scan-cooldown`.
+`--scan-cooldown`. Store scan records somewhere else with `--database-dir`.
 
 ## How the detection handles lighting
 
