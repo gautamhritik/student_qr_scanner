@@ -40,6 +40,8 @@ def validate_args(args) -> None:
         raise SystemExit("--digital-zoom must be 1.0 or greater.")
     if args.scan_cooldown < 0:
         raise SystemExit("--scan-cooldown cannot be negative.")
+    if args.preview_scale <= 0:
+        raise SystemExit("--preview-scale must be greater than 0.")
 
 
 def main() -> None:
@@ -76,6 +78,12 @@ def main() -> None:
         default=ROOT / "scan_database",
         help="Folder where JSON scan records are stored.",
     )
+    parser.add_argument(
+        "--preview-scale",
+        type=float,
+        default=1.0,
+        help="Scale the preview window. Use 0.5 for large 1080p/4K camera frames.",
+    )
     args = parser.parse_args()
     validate_args(args)
 
@@ -94,6 +102,7 @@ def main() -> None:
     actual_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     print("Scanner started. Hold a student QR in front of the camera. Press q to quit.")
     print(f"Camera frame: {actual_width}x{actual_height}, digital zoom: {args.digital_zoom:g}x")
+    print(f"Preview scale: {args.preview_scale:g}x")
     print("For 10m scanning, use a large printed QR and keep it centered in good focus.")
     while True:
         ok, frame = cap.read()
@@ -128,7 +137,17 @@ def main() -> None:
             if points is not None:
                 scanner.draw_detection(frame, points, method)
 
-        cv2.imshow("Student QR Scanner", frame)
+        display_frame = frame
+        if args.preview_scale != 1.0:
+            display_frame = cv2.resize(
+                frame,
+                None,
+                fx=args.preview_scale,
+                fy=args.preview_scale,
+                interpolation=cv2.INTER_AREA,
+            )
+
+        cv2.imshow("Student QR Scanner", display_frame)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 

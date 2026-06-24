@@ -44,6 +44,7 @@ python scan_camera.py --save-scans
 python scan_camera.py --scan-cooldown 5
 python scan_camera.py --width 3840 --height 2160 --digital-zoom 2
 python scan_camera.py --database-dir C:\path\to\scan_database
+python scan_camera.py --width 3840 --height 2160 --preview-scale 0.5
 ```
 
 Press `q` to close the scanner window.
@@ -58,6 +59,8 @@ to see enough QR pixels clearly. For best results:
   laptop webcam.
 - Start with `--width 1920 --height 1080`; try `--width 3840 --height 2160` if
   the camera supports it.
+- Use `--preview-scale 0.5` if a high-resolution preview window is too large for
+  the screen.
 - Keep the QR centered and use `--digital-zoom 2` or `--digital-zoom 3` when the
   QR is far away.
 - Avoid glare, motion blur, and tilted angles. The QR should be flat and focused.
