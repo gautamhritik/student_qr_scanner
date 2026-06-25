@@ -42,6 +42,8 @@ def validate_args(args) -> None:
         raise SystemExit("--scan-cooldown cannot be negative.")
     if args.preview_scale <= 0:
         raise SystemExit("--preview-scale must be greater than 0.")
+    if args.max_scans is not None and args.max_scans <= 0:
+        raise SystemExit("--max-scans must be a positive integer.")
 
 
 def main() -> None:
@@ -84,6 +86,12 @@ def main() -> None:
         default=1.0,
         help="Scale the preview window. Use 0.5 for large 1080p/4K camera frames.",
     )
+    parser.add_argument(
+        "--max-scans",
+        type=int,
+        default=None,
+        help="Stop automatically after this many accepted scans.",
+    )
     args = parser.parse_args()
     validate_args(args)
 
@@ -97,6 +105,7 @@ def main() -> None:
     scans_dir = ROOT / "scans"
     scans_dir.mkdir(exist_ok=True)
     last_seen: dict[str, datetime] = {}
+    saved_this_session = 0
 
     actual_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     actual_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -129,10 +138,15 @@ def main() -> None:
                 print(f"Saved scan record: {record['record_file']}")
                 print(f"Total scans saved: {record['scan_number']}")
                 print(scanner.estimate_distance_readiness(points, frame))
+                saved_this_session += 1
 
                 if args.save_scans:
                     timestamp = now.strftime("%Y%m%d_%H%M%S")
                     cv2.imwrite(str(scans_dir / f"scan_{timestamp}.jpg"), frame)
+
+                if args.max_scans is not None and saved_this_session >= args.max_scans:
+                    print(f"Reached --max-scans={args.max_scans}. Closing scanner.")
+                    break
 
             if points is not None:
                 scanner.draw_detection(frame, points, method)
