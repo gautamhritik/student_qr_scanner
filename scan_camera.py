@@ -10,6 +10,13 @@ from student_qr_scanner.scanner import LightingAdaptiveQRScanner, format_payload
 from student_qr_scanner.storage import ScanDatabase
 
 ROOT = Path(__file__).resolve().parent
+BACKENDS = {
+    "auto": None,
+    "any": cv2.CAP_ANY,
+    "dshow": cv2.CAP_DSHOW,
+    "msmf": cv2.CAP_MSMF,
+    "v4l2": cv2.CAP_V4L2,
+}
 
 
 def parse_camera(value: str):
@@ -31,6 +38,13 @@ def configure_camera(cap, width: int, height: int, fps: int, autofocus: bool) ->
     cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
 
+def open_camera(camera, backend: str):
+    backend_value = BACKENDS[backend]
+    if backend_value is None:
+        return cv2.VideoCapture(camera)
+    return cv2.VideoCapture(camera, backend_value)
+
+
 def validate_args(args) -> None:
     if args.width <= 0 or args.height <= 0:
         raise SystemExit("--width and --height must be positive integers.")
@@ -49,6 +63,12 @@ def validate_args(args) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Scan student QR codes from a camera.")
     parser.add_argument("--camera", default="0", help="Camera index or stream URL.")
+    parser.add_argument(
+        "--backend",
+        choices=sorted(BACKENDS),
+        default="auto",
+        help="OpenCV camera backend. Try dshow or msmf on Windows if a webcam fails.",
+    )
     parser.add_argument("--width", type=int, default=1920, help="Requested camera width.")
     parser.add_argument("--height", type=int, default=1080, help="Requested camera height.")
     parser.add_argument("--fps", type=int, default=30, help="Requested camera FPS.")
@@ -95,9 +115,9 @@ def main() -> None:
     args = parser.parse_args()
     validate_args(args)
 
-    cap = cv2.VideoCapture(parse_camera(args.camera))
+    cap = open_camera(parse_camera(args.camera), args.backend)
     if not cap.isOpened():
-        raise SystemExit(f"Could not open camera: {args.camera}")
+        raise SystemExit(f"Could not open camera: {args.camera} with backend: {args.backend}")
 
     configure_camera(cap, args.width, args.height, args.fps, not args.no_autofocus)
     scanner = LightingAdaptiveQRScanner()
@@ -111,6 +131,7 @@ def main() -> None:
     actual_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     print("Scanner started. Hold a student QR in front of the camera. Press q to quit.")
     print(f"Camera frame: {actual_width}x{actual_height}, digital zoom: {args.digital_zoom:g}x")
+    print(f"Camera backend: {args.backend}")
     print(f"Preview scale: {args.preview_scale:g}x")
     print("For 10m scanning, use a large printed QR and keep it centered in good focus.")
     while True:

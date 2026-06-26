@@ -39,6 +39,7 @@ Useful options:
 
 ```powershell
 python scan_camera.py --camera 1
+python scan_camera.py --camera 0 --backend dshow
 python scan_camera.py --camera "http://PHONE_IP:8080/video"
 python scan_camera.py --save-scans
 python scan_camera.py --scan-cooldown 5
@@ -58,6 +59,8 @@ to see enough QR pixels clearly. For best results:
 - Use `qrs_large_print/` and print the QR as large as practical.
 - Prefer a mobile camera or external webcam with autofocus over a low-resolution
   laptop webcam.
+- Try `--backend dshow` or `--backend msmf` on Windows if the camera opens slowly
+  or does not open.
 - Start with `--width 1920 --height 1080`; try `--width 3840 --height 2160` if
   the camera supports it.
 - Use `--preview-scale 0.5` if a high-resolution preview window is too large for
@@ -88,6 +91,6 @@ after a fixed number of accepted scans with `--max-scans`.
 
 The scanner uses OpenCV's QR detector, then retries decoding on many enhanced
 frames: center crops, grayscale, contrast normalization, gamma correction,
-denoising, thresholding, sharpening, multi-QR decoding, and upscaled versions of
-the camera frame. It is a practical computer-vision pipeline for reliable QR
-decoding under changing lighting and longer scanning distances.
+denoising, thresholding, sharpening, and upscaled versions of the camera frame.
+It is a practical computer-vision pipeline for reliable QR decoding under
+changing lighting and longer scanning distances.
