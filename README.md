@@ -12,6 +12,12 @@ cd C:\Users\gauta\Projects\student_qr_scanner
 python -m pip install -r requirements.txt
 ```
 
+## Tests
+
+```powershell
+python -m pytest
+```
+
 ## Generate QR codes
 
 The QR codes are already generated in `qrs/`, and the matching data is in
