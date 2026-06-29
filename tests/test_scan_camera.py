@@ -1,0 +1,70 @@
+from __future__ import annotations
+
+from types import SimpleNamespace
+
+import pytest
+
+import scan_camera
+
+
+def valid_args(**overrides):
+    args = {
+        "width": 1920,
+        "height": 1080,
+        "fps": 30,
+        "digital_zoom": 1.0,
+        "scan_cooldown": 3.0,
+        "preview_scale": 1.0,
+        "max_scans": None,
+    }
+    args.update(overrides)
+    return SimpleNamespace(**args)
+
+
+def test_parse_camera_keeps_urls_and_converts_indexes() -> None:
+    assert scan_camera.parse_camera("0") == 0
+    assert scan_camera.parse_camera("2") == 2
+    assert scan_camera.parse_camera("http://127.0.0.1:8080/video") == (
+        "http://127.0.0.1:8080/video"
+    )
+
+
+@pytest.mark.parametrize(
+    "override",
+    [
+        {"width": 0},
+        {"height": 0},
+        {"fps": 0},
+        {"digital_zoom": 0.9},
+        {"scan_cooldown": -1},
+        {"preview_scale": 0},
+        {"max_scans": 0},
+    ],
+)
+def test_validate_args_rejects_invalid_values(override) -> None:
+    with pytest.raises(SystemExit):
+        scan_camera.validate_args(valid_args(**override))
+
+
+def test_validate_args_accepts_valid_values() -> None:
+    scan_camera.validate_args(valid_args(max_scans=5, preview_scale=0.5))
+
+
+def test_expected_backends_are_available() -> None:
+    assert {"auto", "any", "dshow", "msmf", "v4l2"} <= set(scan_camera.BACKENDS)
+
+
+def test_open_camera_forwards_backend_to_opencv(monkeypatch) -> None:
+    calls = []
+
+    def fake_video_capture(*args):
+        calls.append(args)
+        return object()
+
+    monkeypatch.setattr(scan_camera.cv2, "VideoCapture", fake_video_capture)
+
+    scan_camera.open_camera(0, "auto")
+    scan_camera.open_camera(1, "dshow")
+
+    assert calls[0] == (0,)
+    assert calls[1] == (1, scan_camera.BACKENDS["dshow"])
