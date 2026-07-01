@@ -93,6 +93,25 @@ front of the camera does not create many duplicate records. Change it with
 `--scan-cooldown`. Store scan records somewhere else with `--database-dir`. Stop
 after a fixed number of accepted scans with `--max-scans`.
 
+## Export scan reports
+
+Convert the JSON scan history into spreadsheet-friendly CSV and summary JSON:
+
+```powershell
+python export_scans.py
+```
+
+Useful options:
+
+```powershell
+python export_scans.py --database-dir scan_database --output-dir exports
+```
+
+The export creates:
+
+- `exports/scan_history.csv`
+- `exports/scan_summary.json`
+
 ## How the detection handles lighting
 
 The scanner uses OpenCV's QR detector, then retries decoding on many enhanced
