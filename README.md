@@ -97,6 +97,6 @@ after a fixed number of accepted scans with `--max-scans`.
 
 The scanner uses OpenCV's QR detector, then retries decoding on many enhanced
 frames: center crops, grayscale, contrast normalization, gamma correction,
-denoising, thresholding, sharpening, and upscaled versions of the camera frame.
-It is a practical computer-vision pipeline for reliable QR decoding under
-changing lighting and longer scanning distances.
+thresholding, sharpening, and upscaled versions of the camera frame. It is a
+practical computer-vision pipeline for reliable QR decoding under changing
+lighting and longer scanning distances.
