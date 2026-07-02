@@ -7,8 +7,10 @@ from pathlib import Path
 
 from student_qr_scanner.reports import (
     export_scan_database,
+    filter_records,
     flatten_record,
     summarize_records,
+    write_html_report,
     write_csv,
 )
 from student_qr_scanner.storage import ScanDatabase
@@ -58,6 +60,24 @@ def test_summarize_records_counts_scans() -> None:
     assert summary["by_date"] == {"2026-07-01": 2, "2026-07-02": 1}
 
 
+def test_filter_records_by_date_name_and_class() -> None:
+    records = [
+        make_record("Aarav Mehta", "8A"),
+        make_record("Isha Rao", "7B", "2026-07-02"),
+        make_record("Arjun Malhotra", "9A", "2026-07-03"),
+    ]
+
+    filtered = filter_records(
+        records,
+        date_from="2026-07-02",
+        date_to="2026-07-03",
+        student_name="arjun",
+        student_class="9A",
+    )
+
+    assert [record["qr_info"]["name"] for record in filtered] == ["Arjun Malhotra"]
+
+
 def test_write_csv_creates_spreadsheet_ready_file(tmp_path: Path) -> None:
     output_path = write_csv([make_record("Aarav Mehta", "8A")], tmp_path / "scan.csv")
 
@@ -66,6 +86,18 @@ def test_write_csv_creates_spreadsheet_ready_file(tmp_path: Path) -> None:
 
     assert rows[0]["name"] == "Aarav Mehta"
     assert rows[0]["class"] == "8A"
+
+
+def test_write_html_report_creates_browser_report(tmp_path: Path) -> None:
+    output_path = write_html_report(
+        [make_record("Aarav Mehta", "8A")],
+        tmp_path / "scan_report.html",
+    )
+
+    html = output_path.read_text(encoding="utf-8")
+    assert "Student QR Scan Report" in html
+    assert "Aarav Mehta" in html
+    assert "Total scans" in html
 
 
 def test_export_scan_database_writes_csv_and_summary(tmp_path: Path) -> None:
@@ -89,6 +121,48 @@ def test_export_scan_database_writes_csv_and_summary(tmp_path: Path) -> None:
 
     assert outputs["csv"].exists()
     assert outputs["summary"].exists()
+    assert outputs["html"].exists()
     summary = json.loads(outputs["summary"].read_text(encoding="utf-8"))
     assert summary["total_scans"] == 1
     assert summary["by_student"] == {"Aarav Mehta": 1}
+
+
+def test_export_scan_database_applies_filters(tmp_path: Path) -> None:
+    database = ScanDatabase(tmp_path / "scan_database")
+    database.save_scan(
+        json.dumps(
+            {
+                "name": "Aarav Mehta",
+                "class": "8A",
+                "roll_no": 11,
+                "age": 13,
+                "class_teacher": "Mrs. Kavita Sharma",
+            }
+        ),
+        "unit-test",
+        datetime(2026, 7, 1, 10, 30, 5, tzinfo=timezone.utc),
+    )
+    database.save_scan(
+        json.dumps(
+            {
+                "name": "Isha Rao",
+                "class": "7B",
+                "roll_no": 4,
+                "age": 12,
+                "class_teacher": "Mr. Rohan Menon",
+            }
+        ),
+        "unit-test",
+        datetime(2026, 7, 2, 10, 30, 5, tzinfo=timezone.utc),
+    )
+
+    outputs = export_scan_database(
+        tmp_path / "scan_database",
+        tmp_path / "exports",
+        date_from="2026-07-02",
+        student_class="7B",
+    )
+
+    summary = json.loads(outputs["summary"].read_text(encoding="utf-8"))
+    assert summary["total_scans"] == 1
+    assert summary["by_student"] == {"Isha Rao": 1}

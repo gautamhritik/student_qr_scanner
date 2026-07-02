@@ -95,7 +95,8 @@ after a fixed number of accepted scans with `--max-scans`.
 
 ## Export scan reports
 
-Convert the JSON scan history into spreadsheet-friendly CSV and summary JSON:
+Convert the JSON scan history into spreadsheet-friendly CSV, summary JSON, and
+an HTML report:
 
 ```powershell
 python export_scans.py
@@ -105,12 +106,15 @@ Useful options:
 
 ```powershell
 python export_scans.py --database-dir scan_database --output-dir exports
+python export_scans.py --date-from 2026-07-01 --date-to 2026-07-31
+python export_scans.py --student-name "Aarav" --class-name 8A
 ```
 
 The export creates:
 
 - `exports/scan_history.csv`
 - `exports/scan_summary.json`
+- `exports/scan_report.html`
 
 ## How the detection handles lighting
 
