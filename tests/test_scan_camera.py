@@ -16,6 +16,7 @@ def valid_args(**overrides):
         "scan_cooldown": 3.0,
         "preview_scale": 1.0,
         "max_scans": None,
+        "no_preview": False,
     }
     args.update(overrides)
     return SimpleNamespace(**args)
@@ -68,3 +69,30 @@ def test_open_camera_forwards_backend_to_opencv(monkeypatch) -> None:
 
     assert calls[0] == (0,)
     assert calls[1] == (1, scan_camera.BACKENDS["dshow"])
+
+
+def test_show_preview_returns_false_when_imshow_fails(monkeypatch) -> None:
+    def fake_imshow(*args):
+        raise scan_camera.cv2.error("preview unavailable")
+
+    monkeypatch.setattr(scan_camera.cv2, "imshow", fake_imshow)
+
+    assert scan_camera.show_preview("window", object(), 1.0) is False
+
+
+def test_show_preview_scales_frame(monkeypatch):
+    calls = []
+
+    def fake_resize(frame, *args, **kwargs):
+        calls.append(("resize", args, kwargs))
+        return "resized"
+
+    def fake_imshow(window_name, frame):
+        calls.append(("imshow", window_name, frame))
+
+    monkeypatch.setattr(scan_camera.cv2, "resize", fake_resize)
+    monkeypatch.setattr(scan_camera.cv2, "imshow", fake_imshow)
+
+    assert scan_camera.show_preview("window", object(), 0.5) is True
+    assert calls[0][0] == "resize"
+    assert calls[1] == ("imshow", "window", "resized")

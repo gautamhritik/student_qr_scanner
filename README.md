@@ -53,9 +53,11 @@ python scan_camera.py --width 3840 --height 2160 --digital-zoom 2
 python scan_camera.py --database-dir C:\path\to\scan_database
 python scan_camera.py --width 3840 --height 2160 --preview-scale 0.5
 python scan_camera.py --max-scans 10
+python scan_camera.py --no-preview
 ```
 
-Press `q` to close the scanner window.
+Press `q` to close the scanner window. If preview is disabled or unavailable,
+press `Ctrl+C` to stop scanning.
 
 ## Long-distance scanning
 
@@ -71,6 +73,7 @@ to see enough QR pixels clearly. For best results:
   the camera supports it.
 - Use `--preview-scale 0.5` if a high-resolution preview window is too large for
   the screen.
+- Use `--no-preview` if OpenCV cannot open a camera preview window.
 - Keep the QR centered and use `--digital-zoom 2` or `--digital-zoom 3` when the
   QR is far away.
 - Avoid glare, motion blur, and tilted angles. The QR should be flat and focused.

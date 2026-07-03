@@ -60,6 +60,24 @@ def validate_args(args) -> None:
         raise SystemExit("--max-scans must be a positive integer.")
 
 
+def show_preview(window_name: str, frame, preview_scale: float) -> bool:
+    display_frame = frame
+    if preview_scale != 1.0:
+        display_frame = cv2.resize(
+            frame,
+            None,
+            fx=preview_scale,
+            fy=preview_scale,
+            interpolation=cv2.INTER_AREA,
+        )
+
+    try:
+        cv2.imshow(window_name, display_frame)
+        return True
+    except cv2.error:
+        return False
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Scan student QR codes from a camera.")
     parser.add_argument("--camera", default="0", help="Camera index or stream URL.")
@@ -112,6 +130,11 @@ def main() -> None:
         default=None,
         help="Stop automatically after this many accepted scans.",
     )
+    parser.add_argument(
+        "--no-preview",
+        action="store_true",
+        help="Run without an OpenCV preview window.",
+    )
     args = parser.parse_args()
     validate_args(args)
 
@@ -132,62 +155,68 @@ def main() -> None:
     print("Scanner started. Hold a student QR in front of the camera. Press q to quit.")
     print(f"Camera frame: {actual_width}x{actual_height}, digital zoom: {args.digital_zoom:g}x")
     print(f"Camera backend: {args.backend}")
-    print(f"Preview scale: {args.preview_scale:g}x")
+    if args.no_preview:
+        print("Preview disabled. Press Ctrl+C to stop scanning.")
+    else:
+        print(f"Preview scale: {args.preview_scale:g}x")
     print("For 10m scanning, use a large printed QR and keep it centered in good focus.")
-    while True:
-        ok, frame = cap.read()
-        if not ok:
-            print("Could not read frame from camera.")
-            break
+    preview_enabled = not args.no_preview
 
-        frame = scanner.digital_zoom(frame, args.digital_zoom)
-        result = scanner.detect(frame)
-        if result:
-            payload, points, method = result
-            now = datetime.now().astimezone()
-            previous = last_seen.get(payload)
-            can_log = (
-                previous is None
-                or (now - previous).total_seconds() >= args.scan_cooldown
-            )
+    try:
+        while True:
+            ok, frame = cap.read()
+            if not ok:
+                print("Could not read frame from camera.")
+                break
 
-            if can_log:
-                last_seen[payload] = now
-                record = database.save_scan(payload, method, now)
-                print(f"\nDetected with {method}:")
-                print(format_payload(payload))
-                print(f"Saved scan record: {record['record_file']}")
-                print(f"Total scans saved: {record['scan_number']}")
-                print(scanner.estimate_distance_readiness(points, frame))
-                saved_this_session += 1
+            frame = scanner.digital_zoom(frame, args.digital_zoom)
+            result = scanner.detect(frame)
+            if result:
+                payload, points, method = result
+                now = datetime.now().astimezone()
+                previous = last_seen.get(payload)
+                can_log = (
+                    previous is None
+                    or (now - previous).total_seconds() >= args.scan_cooldown
+                )
 
-                if args.save_scans:
-                    timestamp = now.strftime("%Y%m%d_%H%M%S")
-                    cv2.imwrite(str(scans_dir / f"scan_{timestamp}.jpg"), frame)
+                if can_log:
+                    last_seen[payload] = now
+                    record = database.save_scan(payload, method, now)
+                    print(f"\nDetected with {method}:")
+                    print(format_payload(payload))
+                    print(f"Saved scan record: {record['record_file']}")
+                    print(f"Total scans saved: {record['scan_number']}")
+                    print(scanner.estimate_distance_readiness(points, frame))
+                    saved_this_session += 1
 
-                if args.max_scans is not None and saved_this_session >= args.max_scans:
-                    print(f"Reached --max-scans={args.max_scans}. Closing scanner.")
-                    break
+                    if args.save_scans:
+                        timestamp = now.strftime("%Y%m%d_%H%M%S")
+                        cv2.imwrite(str(scans_dir / f"scan_{timestamp}.jpg"), frame)
 
-            if points is not None:
-                scanner.draw_detection(frame, points, method)
+                    if args.max_scans is not None and saved_this_session >= args.max_scans:
+                        print(f"Reached --max-scans={args.max_scans}. Closing scanner.")
+                        break
 
-        display_frame = frame
-        if args.preview_scale != 1.0:
-            display_frame = cv2.resize(
-                frame,
-                None,
-                fx=args.preview_scale,
-                fy=args.preview_scale,
-                interpolation=cv2.INTER_AREA,
-            )
+                if points is not None:
+                    scanner.draw_detection(frame, points, method)
 
-        cv2.imshow("Student QR Scanner", display_frame)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+            if preview_enabled:
+                if not show_preview("Student QR Scanner", frame, args.preview_scale):
+                    preview_enabled = False
+                    print(
+                        "OpenCV preview is unavailable in this environment. "
+                        "Continuing in terminal-only mode; press Ctrl+C to stop."
+                    )
 
-    cap.release()
-    cv2.destroyAllWindows()
+            if preview_enabled and cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+    except KeyboardInterrupt:
+        print("\nScanner stopped by user.")
+    finally:
+        cap.release()
+        if preview_enabled:
+            cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
