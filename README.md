@@ -116,6 +116,27 @@ The export creates:
 - `exports/scan_summary.json`
 - `exports/scan_report.html`
 
+## Export attendance reports
+
+Compare the student roster with scan history to mark students present or absent:
+
+```powershell
+python attendance_report.py
+```
+
+Useful options:
+
+```powershell
+python attendance_report.py --date-from 2026-07-02 --date-to 2026-07-02
+python attendance_report.py --class-name 8A
+```
+
+The attendance export creates:
+
+- `exports/attendance.csv`
+- `exports/attendance_summary.json`
+- `exports/attendance_report.html`
+
 ## How the detection handles lighting
 
 The scanner uses OpenCV's QR detector, then retries decoding on many enhanced
