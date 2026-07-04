@@ -32,6 +32,18 @@ To regenerate them:
 python generate_qrs.py
 ```
 
+Useful roster commands:
+
+```powershell
+python manage_students.py list
+python manage_students.py add --name "New Student" --class-name 8A --roll-no 30 --age 13 --class-teacher "Mrs. Kavita Sharma"
+python manage_students.py remove --class-name 8A --roll-no 30
+python generate_qrs.py
+```
+
+`generate_qrs.py` reads `data/students.json`, refreshes `data/students.csv`, and
+regenerates both `qrs/` and `qrs_large_print/`.
+
 ## Scan with laptop or mobile camera
 
 Use camera `0` for the default laptop webcam. If your phone is connected as an
