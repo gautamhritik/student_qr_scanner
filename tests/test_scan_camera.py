@@ -17,6 +17,11 @@ def valid_args(**overrides):
         "preview_scale": 1.0,
         "max_scans": None,
         "no_preview": False,
+        "vote_window": 1,
+        "min_votes": 1,
+        "mining_mode": False,
+        "camera_id": "cam-1",
+        "checkpoint_id": "gate-1",
     }
     args.update(overrides)
     return SimpleNamespace(**args)
@@ -40,6 +45,11 @@ def test_parse_camera_keeps_urls_and_converts_indexes() -> None:
         {"scan_cooldown": -1},
         {"preview_scale": 0},
         {"max_scans": 0},
+        {"vote_window": 0},
+        {"min_votes": 0},
+        {"vote_window": 2, "min_votes": 3},
+        {"mining_mode": True, "camera_id": ""},
+        {"mining_mode": True, "checkpoint_id": ""},
     ],
 )
 def test_validate_args_rejects_invalid_values(override) -> None:
@@ -53,6 +63,20 @@ def test_validate_args_accepts_valid_values() -> None:
 
 def test_expected_backends_are_available() -> None:
     assert {"auto", "any", "dshow", "msmf", "v4l2"} <= set(scan_camera.BACKENDS)
+
+
+def test_accepted_payload_from_votes_waits_for_majority() -> None:
+    recent = scan_camera.deque(maxlen=3)
+
+    assert scan_camera.accepted_payload_from_votes(recent, "A", 3, 2) is None
+    assert scan_camera.accepted_payload_from_votes(recent, "B", 3, 2) is None
+    assert scan_camera.accepted_payload_from_votes(recent, "A", 3, 2) == "A"
+
+
+def test_accepted_payload_from_votes_accepts_immediately_when_disabled() -> None:
+    recent = scan_camera.deque(maxlen=1)
+
+    assert scan_camera.accepted_payload_from_votes(recent, "A", 1, 1) == "A"
 
 
 def test_open_camera_forwards_backend_to_opencv(monkeypatch) -> None:

@@ -1,0 +1,42 @@
+[
+  {
+    "vehicle_id": "TRUCK-001",
+    "plate_number": "MH12MN4101",
+    "vehicle_type": "haul_truck",
+    "owner_operator": "Eastern Pit Logistics",
+    "site": "north-pit",
+    "assigned_route": "ore-face-to-crusher",
+    "checkpoint_id": "gate-1",
+    "status": "active"
+  },
+  {
+    "vehicle_id": "EXC-014",
+    "plate_number": "MH12MN6214",
+    "vehicle_type": "excavator",
+    "owner_operator": "Mine Operations",
+    "site": "north-pit",
+    "assigned_route": "bench-3",
+    "checkpoint_id": "pit-entry",
+    "status": "active"
+  },
+  {
+    "vehicle_id": "WATER-007",
+    "plate_number": "MH12MN7782",
+    "vehicle_type": "water_tanker",
+    "owner_operator": "Dust Control Team",
+    "site": "south-yard",
+    "assigned_route": "yard-to-haul-road",
+    "checkpoint_id": "service-gate",
+    "status": "active"
+  },
+  {
+    "vehicle_id": "DOZER-003",
+    "plate_number": "MH12MN3303",
+    "vehicle_type": "dozer",
+    "owner_operator": "Mine Operations",
+    "site": "north-pit",
+    "assigned_route": "waste-dump",
+    "checkpoint_id": "dump-entry",
+    "status": "maintenance"
+  }
+]

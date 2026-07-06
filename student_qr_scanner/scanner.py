@@ -219,6 +219,19 @@ def format_payload(payload: str) -> str:
     except json.JSONDecodeError:
         return payload
 
+    if data.get("vehicle_id"):
+        return "\n".join(
+            [
+                f"Vehicle/Equipment ID: {data.get('vehicle_id', '')}",
+                f"Plate Number: {data.get('plate_number', '')}",
+                f"Type: {data.get('vehicle_type', '')}",
+                f"Owner/Operator: {data.get('owner_operator', '')}",
+                f"Site: {data.get('site', '')}",
+                f"Route/Checkpoint: {data.get('assigned_route', '')} / {data.get('checkpoint_id', '')}",
+                f"Status: {data.get('status', '')}",
+            ]
+        )
+
     return "\n".join(
         [
             f"Name: {data.get('name', '')}",

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter, deque
 from datetime import datetime
 from pathlib import Path
 
 import cv2
 
+from student_qr_scanner.mining_events import MiningEventStore, build_scan_event
 from student_qr_scanner.scanner import LightingAdaptiveQRScanner, format_payload
 from student_qr_scanner.storage import ScanDatabase
 
@@ -58,6 +60,29 @@ def validate_args(args) -> None:
         raise SystemExit("--preview-scale must be greater than 0.")
     if args.max_scans is not None and args.max_scans <= 0:
         raise SystemExit("--max-scans must be a positive integer.")
+    if args.vote_window <= 0:
+        raise SystemExit("--vote-window must be a positive integer.")
+    if args.min_votes <= 0:
+        raise SystemExit("--min-votes must be a positive integer.")
+    if args.min_votes > args.vote_window:
+        raise SystemExit("--min-votes cannot be greater than --vote-window.")
+    if args.mining_mode:
+        if not args.camera_id.strip():
+            raise SystemExit("--camera-id is required in mining mode.")
+        if not args.checkpoint_id.strip():
+            raise SystemExit("--checkpoint-id is required in mining mode.")
+
+
+def accepted_payload_from_votes(recent_payloads, payload: str, vote_window: int, min_votes: int) -> str | None:
+    recent_payloads.append(payload)
+    if vote_window <= 1:
+        return payload
+    if len(recent_payloads) < min_votes:
+        return None
+    value, count = Counter(recent_payloads).most_common(1)[0]
+    if count >= min_votes:
+        return value
+    return None
 
 
 def show_preview(window_name: str, frame, preview_scale: float) -> bool:
@@ -79,7 +104,7 @@ def show_preview(window_name: str, frame, preview_scale: float) -> bool:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Scan student QR codes from a camera.")
+    parser = argparse.ArgumentParser(description="Scan QR codes from a camera.")
     parser.add_argument("--camera", default="0", help="Camera index or stream URL.")
     parser.add_argument(
         "--backend",
@@ -135,6 +160,39 @@ def main() -> None:
         action="store_true",
         help="Run without an OpenCV preview window.",
     )
+    parser.add_argument(
+        "--mining-mode",
+        action="store_true",
+        help="Store vehicle/equipment gate events with mining metadata.",
+    )
+    parser.add_argument("--camera-id", default="cam-1", help="Camera identifier saved in mining scan events.")
+    parser.add_argument(
+        "--checkpoint-id",
+        default="checkpoint-1",
+        help="Gate/checkpoint identifier saved in mining scan events.",
+    )
+    parser.add_argument(
+        "--mining-database-dir",
+        type=Path,
+        default=ROOT / "mining_scan_database",
+        help="Folder where mining scan event JSON files are stored.",
+    )
+    parser.add_argument(
+        "--anpr-plate-number",
+        help="Optional ANPR placeholder value to compare with the QR plate number.",
+    )
+    parser.add_argument(
+        "--vote-window",
+        type=int,
+        default=1,
+        help="Number of recent decoded frames kept for majority voting.",
+    )
+    parser.add_argument(
+        "--min-votes",
+        type=int,
+        default=1,
+        help="Minimum matching decoded frames required before logging.",
+    )
     args = parser.parse_args()
     validate_args(args)
 
@@ -145,16 +203,24 @@ def main() -> None:
     configure_camera(cap, args.width, args.height, args.fps, not args.no_autofocus)
     scanner = LightingAdaptiveQRScanner()
     database = ScanDatabase(args.database_dir)
+    mining_store = MiningEventStore(args.mining_database_dir) if args.mining_mode else None
     scans_dir = ROOT / "scans"
     scans_dir.mkdir(exist_ok=True)
     last_seen: dict[str, datetime] = {}
+    recent_payloads = deque(maxlen=args.vote_window)
     saved_this_session = 0
 
     actual_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     actual_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    print("Scanner started. Hold a student QR in front of the camera. Press q to quit.")
+    if args.mining_mode:
+        print("Mining checkpoint scanner started. Hold a vehicle/equipment QR in front of the camera.")
+        print(f"Checkpoint: {args.checkpoint_id}, camera: {args.camera_id}")
+    else:
+        print("Scanner started. Hold a student QR in front of the camera. Press q to quit.")
     print(f"Camera frame: {actual_width}x{actual_height}, digital zoom: {args.digital_zoom:g}x")
     print(f"Camera backend: {args.backend}")
+    if args.vote_window > 1:
+        print(f"Frame voting: {args.min_votes} matching reads within {args.vote_window} frames")
     if args.no_preview:
         print("Preview disabled. Press Ctrl+C to stop scanning.")
     else:
@@ -173,21 +239,63 @@ def main() -> None:
             result = scanner.detect(frame)
             if result:
                 payload, points, method = result
+                accepted_payload = accepted_payload_from_votes(
+                    recent_payloads,
+                    payload,
+                    args.vote_window,
+                    args.min_votes,
+                )
+                if accepted_payload is None:
+                    if points is not None:
+                        scanner.draw_detection(frame, points, f"{method} (voting)")
+                    if preview_enabled:
+                        if not show_preview("Student QR Scanner", frame, args.preview_scale):
+                            preview_enabled = False
+                            print(
+                                "OpenCV preview is unavailable in this environment. "
+                                "Continuing in terminal-only mode; press Ctrl+C to stop."
+                            )
+                    if preview_enabled and cv2.waitKey(1) & 0xFF == ord("q"):
+                        break
+                    continue
+
                 now = datetime.now().astimezone()
-                previous = last_seen.get(payload)
+                duplicate_key = (
+                    f"{args.checkpoint_id}:{accepted_payload}"
+                    if args.mining_mode
+                    else accepted_payload
+                )
+                previous = last_seen.get(duplicate_key)
                 can_log = (
                     previous is None
                     or (now - previous).total_seconds() >= args.scan_cooldown
                 )
 
                 if can_log:
-                    last_seen[payload] = now
-                    record = database.save_scan(payload, method, now)
+                    last_seen[duplicate_key] = now
+                    readiness = scanner.estimate_distance_readiness(points, frame)
                     print(f"\nDetected with {method}:")
-                    print(format_payload(payload))
-                    print(f"Saved scan record: {record['record_file']}")
-                    print(f"Total scans saved: {record['scan_number']}")
-                    print(scanner.estimate_distance_readiness(points, frame))
+                    print(format_payload(accepted_payload))
+                    if args.mining_mode and mining_store is not None:
+                        event = build_scan_event(
+                            accepted_payload,
+                            method,
+                            now,
+                            camera_id=args.camera_id,
+                            checkpoint_id=args.checkpoint_id,
+                            readiness=readiness,
+                            anpr_plate_number=args.anpr_plate_number,
+                        )
+                        record = mining_store.save_event(event)
+                        print(f"Saved mining event: {record['record_file']}")
+                        print(f"Event status: {record['scan_status']}")
+                        print(f"ANPR status: {record['anpr_match_status']}")
+                        print(f"Total mining events saved: {record['event_number']}")
+                    else:
+                        record = database.save_scan(accepted_payload, method, now)
+                        print(f"Saved scan record: {record['record_file']}")
+                        print(f"Total scans saved: {record['scan_number']}")
+                    print(readiness)
                     saved_this_session += 1
 
                     if args.save_scans:

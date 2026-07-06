@@ -27,6 +27,31 @@ def test_format_payload_formats_student_json() -> None:
     ]
 
 
+def test_format_payload_formats_vehicle_json() -> None:
+    payload = json.dumps(
+        {
+            "vehicle_id": "TRUCK-001",
+            "plate_number": "MH12MN4101",
+            "vehicle_type": "haul_truck",
+            "owner_operator": "Pit Ops",
+            "site": "north-pit",
+            "assigned_route": "gate-to-crusher",
+            "checkpoint_id": "gate-1",
+            "status": "active",
+        }
+    )
+
+    assert format_payload(payload).splitlines() == [
+        "Vehicle/Equipment ID: TRUCK-001",
+        "Plate Number: MH12MN4101",
+        "Type: haul_truck",
+        "Owner/Operator: Pit Ops",
+        "Site: north-pit",
+        "Route/Checkpoint: gate-to-crusher / gate-1",
+        "Status: active",
+    ]
+
+
 def test_format_payload_returns_raw_text_for_invalid_json() -> None:
     assert format_payload("plain qr text") == "plain qr text"
 
