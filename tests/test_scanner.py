@@ -4,27 +4,7 @@ import json
 
 import numpy as np
 
-from student_qr_scanner.scanner import LightingAdaptiveQRScanner, format_payload
-
-
-def test_format_payload_formats_student_json() -> None:
-    payload = json.dumps(
-        {
-            "name": "Aarav Mehta",
-            "class": "8A",
-            "roll_no": 11,
-            "age": 13,
-            "class_teacher": "Mrs. Kavita Sharma",
-        }
-    )
-
-    assert format_payload(payload).splitlines() == [
-        "Name: Aarav Mehta",
-        "Class: 8A",
-        "Roll No: 11",
-        "Age: 13",
-        "Class Teacher: Mrs. Kavita Sharma",
-    ]
+from mining_qr_scanner.scanner import LightingAdaptiveQRScanner, format_payload
 
 
 def test_format_payload_formats_vehicle_json() -> None:
@@ -32,22 +12,29 @@ def test_format_payload_formats_vehicle_json() -> None:
         {
             "vehicle_id": "TRUCK-001",
             "plate_number": "MH12MN4101",
-            "vehicle_type": "haul_truck",
+            "vehicle_type": "dump_truck",
             "owner_operator": "Pit Ops",
-            "site": "north-pit",
-            "assigned_route": "gate-to-crusher",
-            "checkpoint_id": "gate-1",
+            "driver_id": "DRV-001",
+            "driver_name": "Ramesh Yadav",
+            "material_type": "iron_ore",
+            "load_status": "loaded",
+            "load_weight_tons": "34.5",
+            "source_zone": "pit-a",
+            "destination_zone": "crusher-1",
+            "route_id": "route-pit-a-crusher-1",
             "status": "active",
         }
     )
 
     assert format_payload(payload).splitlines() == [
-        "Vehicle/Equipment ID: TRUCK-001",
+        "Vehicle ID: TRUCK-001",
         "Plate Number: MH12MN4101",
-        "Type: haul_truck",
+        "Type: dump_truck",
         "Owner/Operator: Pit Ops",
-        "Site: north-pit",
-        "Route/Checkpoint: gate-to-crusher / gate-1",
+        "Driver: Ramesh Yadav (DRV-001)",
+        "Material: iron_ore",
+        "Load: loaded / 34.5 tons",
+        "Route: pit-a -> crusher-1 (route-pit-a-crusher-1)",
         "Status: active",
     ]
 

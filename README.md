@@ -1,18 +1,16 @@
-# Student QR Scanner
+# Mining Vehicle QR Scanner
 
-This project creates 10 random student QR codes and provides a camera scanner that
-tries multiple lighting-aware image enhancement passes before decoding.
-
-It also includes a Phase-1 mining identification prototype that reuses the same
-QR scanner foundation for vehicle/equipment gate events, camera/checkpoint
-metadata, rugged-condition testing, and future ANPR cross-validation.
+This project scans QR codes mounted on moving mining vehicles and trucks from a
+pole or gate camera. Each QR payload contains vehicle, driver, cargo, route, and
+permit information, and every accepted scan updates a local JSON database with
+real-time in/out vehicle status.
 
 Maintainer: Hritik Gautam <gautamhritik@gmail.com>
 
 ## Setup
 
 ```powershell
-cd C:\Users\gauta\Projects\student_qr_scanner
+cd <project-folder>
 python -m pip install -r requirements.txt
 ```
 
@@ -22,217 +20,114 @@ python -m pip install -r requirements.txt
 python -m pytest
 ```
 
-## Generate QR codes
+## Fleet Registry
 
-The QR codes are already generated in `qrs/`, and the matching data is in
-`data/students.csv` and `data/students.json`.
+The mining QR registry is stored in `data/fleet.json`. Records include vehicle,
+driver, cargo, route, site, gate, checkpoint, permit, and optional RFID data.
 
-Large-print versions are generated in `qrs_large_print/`. Use these for distance
-testing, posters, project demos, or display on a large screen.
-
-To regenerate them:
-
-```powershell
-python generate_qrs.py
-```
-
-Useful roster commands:
-
-```powershell
-python manage_students.py list
-python manage_students.py add --name "New Student" --class-name 8A --roll-no 30 --age 13 --class-teacher "Mrs. Kavita Sharma"
-python manage_students.py remove --class-name 8A --roll-no 30
-python generate_qrs.py
-```
-
-`generate_qrs.py` reads `data/students.json`, refreshes `data/students.csv`, and
-regenerates both `qrs/` and `qrs_large_print/`.
-
-## Mining fleet QR prototype
-
-The mining prototype uses `data/fleet.json` as a vehicle/equipment registry. Each
-record includes vehicle/equipment ID, plate number, type, owner/operator, site,
-assigned route/checkpoint, and status.
-
-Useful fleet commands:
+Useful commands:
 
 ```powershell
 python manage_fleet.py list
-python manage_fleet.py add --vehicle-id TRUCK-100 --plate-number MH12AB1000 --vehicle-type haul_truck --owner-operator "Pit Ops" --site north-pit --assigned-route gate-to-crusher --checkpoint-id gate-1
+python manage_fleet.py add --vehicle-id TRUCK-100 --plate-number MH12AB1000 --vehicle-type dump_truck --driver-id DRV-100 --driver-name "Amit Sharma" --license-number MH-DRV-100 --material-type iron_ore --load-status loaded --source-zone pit-a --destination-zone crusher-1 --route-id route-pit-a-crusher-1 --site-id mine-1 --gate-id main-gate --checkpoint-id gate-1
 python manage_fleet.py remove --vehicle-id TRUCK-100
+```
+
+## Generate Mining Vehicle QR Codes
+
+```powershell
 python generate_vehicle_qrs.py
 ```
 
-`generate_vehicle_qrs.py` writes standard QR images to `vehicle_qrs/`,
-large-print QR images to `vehicle_qrs_large_print/`, and a spreadsheet-friendly
-copy of the registry to `data/fleet.csv`.
+The generator creates:
 
-## Scan with laptop or mobile camera
+- `mining_vehicle_qrs/`
+- `mining_vehicle_qrs_large_print/`
+- `data/fleet.csv`
 
-Use camera `0` for the default laptop webcam. If your phone is connected as an
-IP/webcam device, use that camera index or URL.
+Use the large-print QR files for pole-camera and distance testing.
+
+## Run A Gate Scanner
+
+Use camera `0` for the default laptop camera. IP camera or phone camera streams
+can be passed as URLs.
 
 ```powershell
-python scan_camera.py --camera 0
+python scan_camera.py --camera 0 --site-id mine-1 --gate-id main-gate --checkpoint-id gate-1 --camera-id pole-cam-1 --direction in
+python scan_camera.py --camera 0 --site-id mine-1 --gate-id main-gate --checkpoint-id gate-1 --camera-id pole-cam-1 --direction out
 ```
 
 Useful options:
 
 ```powershell
-python scan_camera.py --camera 1
-python scan_camera.py --camera 0 --backend dshow
-python scan_camera.py --camera "http://PHONE_IP:8080/video"
-python scan_camera.py --save-scans
-python scan_camera.py --scan-cooldown 5
-python scan_camera.py --width 3840 --height 2160 --digital-zoom 2
-python scan_camera.py --database-dir C:\path\to\scan_database
-python scan_camera.py --width 3840 --height 2160 --preview-scale 0.5
-python scan_camera.py --max-scans 10
-python scan_camera.py --no-preview
+python scan_camera.py --camera 0 --backend dshow --direction in
+python scan_camera.py --camera "http://PHONE_IP:8080/video" --direction in
+python scan_camera.py --direction in --width 3840 --height 2160 --digital-zoom 2
+python scan_camera.py --direction in --vote-window 5 --min-votes 3
+python scan_camera.py --direction in --save-scans
+python scan_camera.py --direction in --no-preview
+python scan_camera.py --direction in --max-scans 10
 ```
 
-Press `q` to close the scanner window. If preview is disabled or unavailable,
-press `Ctrl+C` to stop scanning.
+The scanner uses majority voting by default so a single noisy frame does not
+create a movement event. Duplicate scans for the same vehicle, checkpoint, and
+direction within the cooldown period are stored as `duplicate_suppressed` and do
+not update real-time vehicle state.
 
-Mining checkpoint mode stores richer vehicle/equipment events:
+## Mining Database
 
-```powershell
-python scan_camera.py --mining-mode --camera 0 --checkpoint-id gate-1 --camera-id cam-1 --vote-window 5 --min-votes 3
-python scan_camera.py --mining-mode --camera 0 --checkpoint-id gate-1 --camera-id cam-1 --no-preview
-```
+Operational data is stored in `mining_database/` by default:
 
-Optional ANPR comparison can be simulated until the actual ANPR layer is added:
+- `mining_database/events.json`
+- `mining_database/records/*.json`
+- `mining_database/vehicle_state.json`
 
-```powershell
-python scan_camera.py --mining-mode --checkpoint-id gate-1 --camera-id cam-1 --anpr-plate-number MH12MN4101
-```
+Accepted `in` scans mark a vehicle as `inside`. Accepted `out` scans mark a
+vehicle as `outside`. Validation failures and duplicate-suppressed events remain
+in event history for reporting.
 
-## Long-distance scanning
-
-For 10m scanning, software is only one part of the result. The camera must be able
-to see enough QR pixels clearly. For best results:
-
-- Use `qrs_large_print/` and print the QR as large as practical.
-- Prefer a mobile camera or external webcam with autofocus over a low-resolution
-  laptop webcam.
-- Try `--backend dshow` or `--backend msmf` on Windows if the camera opens slowly
-  or does not open.
-- Start with `--width 1920 --height 1080`; try `--width 3840 --height 2160` if
-  the camera supports it.
-- Use `--preview-scale 0.5` if a high-resolution preview window is too large for
-  the screen.
-- Use `--no-preview` if OpenCV cannot open a camera preview window.
-- Keep the QR centered and use `--digital-zoom 2` or `--digital-zoom 3` when the
-  QR is far away.
-- Avoid glare, motion blur, and tilted angles. The QR should be flat and focused.
-
-## Scan database
-
-Every accepted QR scan is saved in `scan_database/` while the same information is
-also printed in the terminal.
-
-- `scan_database/scan_history.json` keeps the complete scan history.
-- `scan_database/records/` stores one separate JSON file for each scan.
-- Each record includes scan date, scan time, detection method, and the QR student
-  information.
-- JSON files are written atomically so an interrupted write is less likely to
-  corrupt the scan history.
-- The terminal shows the total number of saved scans after each accepted scan.
-
-The scanner uses a 3-second cooldown for the same QR by default so one QR held in
-front of the camera does not create many duplicate records. Change it with
-`--scan-cooldown`. Store scan records somewhere else with `--database-dir`. Stop
-after a fixed number of accepted scans with `--max-scans`.
-
-In mining mode, events are stored in `mining_scan_database/` by default. Each
-event includes timestamp, date, time, camera ID, checkpoint ID, detection method,
-vehicle/equipment fields, payload validation result, readiness note, and ANPR
-match placeholder status. Duplicate suppression is scoped by QR payload and
-checkpoint.
-
-## Export scan reports
-
-Convert the JSON scan history into spreadsheet-friendly CSV, summary JSON, and
-an HTML report:
-
-```powershell
-python export_scans.py
-```
-
-Useful options:
-
-```powershell
-python export_scans.py --database-dir scan_database --output-dir exports
-python export_scans.py --date-from 2026-07-01 --date-to 2026-07-31
-python export_scans.py --student-name "Aarav" --class-name 8A
-```
-
-The export creates:
-
-- `exports/scan_history.csv`
-- `exports/scan_summary.json`
-- `exports/scan_report.html`
-
-Mining event reports:
+## Export Mining Reports
 
 ```powershell
 python export_mining_scans.py
-python export_mining_scans.py --checkpoint-id gate-1
-python export_mining_scans.py --vehicle-id TRUCK-001 --date-from 2026-07-01 --date-to 2026-07-31
+python export_mining_scans.py --date-from 2026-07-01 --date-to 2026-07-31
+python export_mining_scans.py --gate-id main-gate --direction in
+python export_mining_scans.py --vehicle-id TRUCK-001
+python export_mining_scans.py --driver-id DRV-001
+python export_mining_scans.py --material-type iron_ore
 ```
 
-The mining export creates:
+The exporter creates:
 
-- `exports/mining_scan_events.csv`
-- `exports/mining_scan_summary.json`
-- `exports/mining_scan_report.html`
+- `exports/mining_events.csv`
+- `exports/mining_summary.json`
+- `exports/mining_report.html`
 
-## Rugged-condition benchmark
+Reports summarize current inside/outside status, vehicle movement, drivers,
+routes, materials, gates, cameras, duplicate-suppressed scans, validation
+failures, and ANPR placeholder match status.
 
-Use the benchmark tool to test QR decoding under synthetic mining-style
-conditions: dust, blur, glare, low light, crop, rotation, and distance scaling.
+## Rugged-Condition Benchmark
+
+Use the benchmark tool to test QR decoding under synthetic mining conditions:
+dust, blur, glare, low light, crop, rotation, and distance scaling.
 
 ```powershell
 python generate_vehicle_qrs.py
-python benchmark_qr_conditions.py --input-dir vehicle_qrs --output-dir exports\qr_condition_benchmark
+python benchmark_qr_conditions.py --input-dir mining_vehicle_qrs --output-dir exports\qr_condition_benchmark
 ```
 
-The benchmark creates CSV, JSON, HTML, and generated condition images under the
+The benchmark creates CSV, JSON, HTML, and generated condition images in the
 selected output folder.
 
-## ANPR direction
+## Detection Notes
 
-ANPR is prepared as a parallel verification layer, not the primary identifier
-yet. The registry already stores `plate_number`, mining scan events include
-`anpr_plate_number` and `anpr_match_status`, and `--anpr-plate-number` can be
-used to simulate QR-vs-plate matching during demos. The next step is to add an
-ANPR detector and compare the detected plate against the QR payload.
+The scanner uses OpenCV's QR detector and retries decoding on enhanced frame
+variants: center crops, grayscale, contrast normalization, gamma correction,
+thresholding, sharpening, and upscaled versions of the camera frame. Long-distance
+pole-camera scanning still depends on camera resolution, focus, QR print size,
+vehicle speed, lighting, and placement angle.
 
-## Export attendance reports
-
-Compare the student roster with scan history to mark students present or absent:
-
-```powershell
-python attendance_report.py
-```
-
-Useful options:
-
-```powershell
-python attendance_report.py --date-from 2026-07-02 --date-to 2026-07-02
-python attendance_report.py --class-name 8A
-```
-
-The attendance export creates:
-
-- `exports/attendance.csv`
-- `exports/attendance_summary.json`
-- `exports/attendance_report.html`
-
-## How the detection handles lighting
-
-The scanner uses OpenCV's QR detector, then retries decoding on many enhanced
-frames: center crops, grayscale, contrast normalization, gamma correction,
-thresholding, sharpening, and upscaled versions of the camera frame. It is a
-practical computer-vision pipeline for reliable QR decoding under changing
-lighting and longer scanning distances.
+ANPR is prepared as a future verification layer. The schema stores
+`plate_number`, `anpr_plate_number`, and `anpr_match_status`, but full ANPR is
+not implemented yet.

@@ -7,9 +7,8 @@ from pathlib import Path
 
 import cv2
 
-from student_qr_scanner.mining_events import MiningEventStore, build_scan_event
-from student_qr_scanner.scanner import LightingAdaptiveQRScanner, format_payload
-from student_qr_scanner.storage import ScanDatabase
+from mining_qr_scanner.mining_events import MiningEventStore, build_scan_event
+from mining_qr_scanner.scanner import LightingAdaptiveQRScanner, format_payload
 
 ROOT = Path(__file__).resolve().parent
 BACKENDS = {
@@ -66,11 +65,14 @@ def validate_args(args) -> None:
         raise SystemExit("--min-votes must be a positive integer.")
     if args.min_votes > args.vote_window:
         raise SystemExit("--min-votes cannot be greater than --vote-window.")
-    if args.mining_mode:
-        if not args.camera_id.strip():
-            raise SystemExit("--camera-id is required in mining mode.")
-        if not args.checkpoint_id.strip():
-            raise SystemExit("--checkpoint-id is required in mining mode.")
+    if not args.site_id.strip():
+        raise SystemExit("--site-id is required.")
+    if not args.gate_id.strip():
+        raise SystemExit("--gate-id is required.")
+    if not args.camera_id.strip():
+        raise SystemExit("--camera-id is required.")
+    if not args.checkpoint_id.strip():
+        raise SystemExit("--checkpoint-id is required.")
 
 
 def accepted_payload_from_votes(recent_payloads, payload: str, vote_window: int, min_votes: int) -> str | None:
@@ -104,7 +106,7 @@ def show_preview(window_name: str, frame, preview_scale: float) -> bool:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Scan QR codes from a camera.")
+    parser = argparse.ArgumentParser(description="Scan mining vehicle QR codes from a pole/gate camera.")
     parser.add_argument("--camera", default="0", help="Camera index or stream URL.")
     parser.add_argument(
         "--backend",
@@ -134,14 +136,8 @@ def main() -> None:
     parser.add_argument(
         "--scan-cooldown",
         type=float,
-        default=3.0,
-        help="Seconds before the same QR can be logged again.",
-    )
-    parser.add_argument(
-        "--database-dir",
-        type=Path,
-        default=ROOT / "scan_database",
-        help="Folder where JSON scan records are stored.",
+        default=8.0,
+        help="Seconds before the same vehicle QR at the same checkpoint is logged again.",
     )
     parser.add_argument(
         "--preview-scale",
@@ -160,22 +156,20 @@ def main() -> None:
         action="store_true",
         help="Run without an OpenCV preview window.",
     )
-    parser.add_argument(
-        "--mining-mode",
-        action="store_true",
-        help="Store vehicle/equipment gate events with mining metadata.",
-    )
-    parser.add_argument("--camera-id", default="cam-1", help="Camera identifier saved in mining scan events.")
+    parser.add_argument("--site-id", default="mine-1", help="Mining site identifier saved in movement events.")
+    parser.add_argument("--gate-id", default="main-gate", help="Gate identifier saved in movement events.")
+    parser.add_argument("--camera-id", default="pole-cam-1", help="Pole camera identifier saved in movement events.")
     parser.add_argument(
         "--checkpoint-id",
-        default="checkpoint-1",
-        help="Gate/checkpoint identifier saved in mining scan events.",
+        default="gate-1",
+        help="Checkpoint identifier saved in movement events.",
     )
+    parser.add_argument("--direction", choices=["in", "out"], required=True, help="Vehicle movement direction for this scanner.")
     parser.add_argument(
-        "--mining-database-dir",
+        "--database-dir",
         type=Path,
-        default=ROOT / "mining_scan_database",
-        help="Folder where mining scan event JSON files are stored.",
+        default=ROOT / "mining_database",
+        help="Folder where mining movement event JSON files are stored.",
     )
     parser.add_argument(
         "--anpr-plate-number",
@@ -184,13 +178,13 @@ def main() -> None:
     parser.add_argument(
         "--vote-window",
         type=int,
-        default=1,
+        default=5,
         help="Number of recent decoded frames kept for majority voting.",
     )
     parser.add_argument(
         "--min-votes",
         type=int,
-        default=1,
+        default=3,
         help="Minimum matching decoded frames required before logging.",
     )
     args = parser.parse_args()
@@ -202,8 +196,7 @@ def main() -> None:
 
     configure_camera(cap, args.width, args.height, args.fps, not args.no_autofocus)
     scanner = LightingAdaptiveQRScanner()
-    database = ScanDatabase(args.database_dir)
-    mining_store = MiningEventStore(args.mining_database_dir) if args.mining_mode else None
+    mining_store = MiningEventStore(args.database_dir)
     scans_dir = ROOT / "scans"
     scans_dir.mkdir(exist_ok=True)
     last_seen: dict[str, datetime] = {}
@@ -212,11 +205,11 @@ def main() -> None:
 
     actual_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     actual_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    if args.mining_mode:
-        print("Mining checkpoint scanner started. Hold a vehicle/equipment QR in front of the camera.")
-        print(f"Checkpoint: {args.checkpoint_id}, camera: {args.camera_id}")
-    else:
-        print("Scanner started. Hold a student QR in front of the camera. Press q to quit.")
+    print("Mining vehicle QR scanner started. Hold a vehicle QR in front of the pole camera.")
+    print(
+        f"Site: {args.site_id}, gate: {args.gate_id}, checkpoint: {args.checkpoint_id}, "
+        f"camera: {args.camera_id}, direction: {args.direction}"
+    )
     print(f"Camera frame: {actual_width}x{actual_height}, digital zoom: {args.digital_zoom:g}x")
     print(f"Camera backend: {args.backend}")
     if args.vote_window > 1:
@@ -249,7 +242,7 @@ def main() -> None:
                     if points is not None:
                         scanner.draw_detection(frame, points, f"{method} (voting)")
                     if preview_enabled:
-                        if not show_preview("Student QR Scanner", frame, args.preview_scale):
+                        if not show_preview("Mining Vehicle QR Scanner", frame, args.preview_scale):
                             preview_enabled = False
                             print(
                                 "OpenCV preview is unavailable in this environment. "
@@ -260,57 +253,66 @@ def main() -> None:
                     continue
 
                 now = datetime.now().astimezone()
-                duplicate_key = (
-                    f"{args.checkpoint_id}:{accepted_payload}"
-                    if args.mining_mode
-                    else accepted_payload
-                )
+                duplicate_key = f"{args.checkpoint_id}:{args.direction}:{accepted_payload}"
                 previous = last_seen.get(duplicate_key)
                 can_log = (
                     previous is None
                     or (now - previous).total_seconds() >= args.scan_cooldown
                 )
 
+                readiness = scanner.estimate_distance_readiness(points, frame)
+                frame_path = ""
+                if args.save_scans and can_log:
+                    timestamp = now.strftime("%Y%m%d_%H%M%S")
+                    frame_path = str(scans_dir / f"{args.direction}_{timestamp}.jpg")
+                    cv2.imwrite(frame_path, frame)
+
                 if can_log:
                     last_seen[duplicate_key] = now
-                    readiness = scanner.estimate_distance_readiness(points, frame)
+                    scan_status = None
+                else:
+                    scan_status = "duplicate_suppressed"
+
+                event = build_scan_event(
+                    accepted_payload,
+                    method,
+                    now,
+                    site_id=args.site_id,
+                    gate_id=args.gate_id,
+                    camera_id=args.camera_id,
+                    checkpoint_id=args.checkpoint_id,
+                    direction=args.direction,
+                    readiness=readiness,
+                    vote_window=args.vote_window,
+                    min_votes=args.min_votes,
+                    vote_count=Counter(recent_payloads)[accepted_payload],
+                    frame_path=frame_path,
+                    scan_status=scan_status,
+                    anpr_plate_number=args.anpr_plate_number,
+                )
+                record = mining_store.save_event(event)
+                if can_log:
                     print(f"\nDetected with {method}:")
                     print(format_payload(accepted_payload))
-                    if args.mining_mode and mining_store is not None:
-                        event = build_scan_event(
-                            accepted_payload,
-                            method,
-                            now,
-                            camera_id=args.camera_id,
-                            checkpoint_id=args.checkpoint_id,
-                            readiness=readiness,
-                            anpr_plate_number=args.anpr_plate_number,
-                        )
-                        record = mining_store.save_event(event)
-                        print(f"Saved mining event: {record['record_file']}")
-                        print(f"Event status: {record['scan_status']}")
-                        print(f"ANPR status: {record['anpr_match_status']}")
-                        print(f"Total mining events saved: {record['event_number']}")
-                    else:
-                        record = database.save_scan(accepted_payload, method, now)
-                        print(f"Saved scan record: {record['record_file']}")
-                        print(f"Total scans saved: {record['scan_number']}")
+                    print(f"Saved mining movement event: {record['record_file']}")
+                    print(f"Direction: {record['direction']}")
+                    print(f"Event status: {record['scan_status']}")
+                    print(f"ANPR status: {record['anpr_match_status']}")
+                    print(f"Total mining events saved: {record['event_number']}")
                     print(readiness)
                     saved_this_session += 1
-
-                    if args.save_scans:
-                        timestamp = now.strftime("%Y%m%d_%H%M%S")
-                        cv2.imwrite(str(scans_dir / f"scan_{timestamp}.jpg"), frame)
 
                     if args.max_scans is not None and saved_this_session >= args.max_scans:
                         print(f"Reached --max-scans={args.max_scans}. Closing scanner.")
                         break
+                else:
+                    print(f"Duplicate suppressed for checkpoint {args.checkpoint_id}: {record['vehicle_id']}")
 
                 if points is not None:
                     scanner.draw_detection(frame, points, method)
 
             if preview_enabled:
-                if not show_preview("Student QR Scanner", frame, args.preview_scale):
+                if not show_preview("Mining Vehicle QR Scanner", frame, args.preview_scale):
                     preview_enabled = False
                     print(
                         "OpenCV preview is unavailable in this environment. "

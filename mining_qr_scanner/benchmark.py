@@ -10,7 +10,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
 
-from student_qr_scanner.scanner import LightingAdaptiveQRScanner
+from mining_qr_scanner.scanner import LightingAdaptiveQRScanner
 
 
 CONDITIONS = [

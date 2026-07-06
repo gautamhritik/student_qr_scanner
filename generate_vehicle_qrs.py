@@ -7,13 +7,13 @@ from pathlib import Path
 
 import qrcode
 
-from student_qr_scanner.fleet import FLEET_FIELDS, load_fleet
+from mining_qr_scanner.fleet import FLEET_FIELDS, load_fleet
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
 REGISTRY_PATH = DATA_DIR / "fleet.json"
-QR_DIR = ROOT / "vehicle_qrs"
-LARGE_QR_DIR = ROOT / "vehicle_qrs_large_print"
+QR_DIR = ROOT / "mining_vehicle_qrs"
+LARGE_QR_DIR = ROOT / "mining_vehicle_qrs_large_print"
 
 
 def qr_payload(vehicle: dict) -> str:
@@ -74,15 +74,15 @@ def generate_vehicle_qr_files(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate mining vehicle/equipment QR code images.")
+    parser = argparse.ArgumentParser(description="Generate mining vehicle QR code images with driver and cargo data.")
     parser.add_argument("--registry", type=Path, default=REGISTRY_PATH, help="Fleet registry JSON path.")
     parser.add_argument("--data-dir", type=Path, default=DATA_DIR, help="Output folder for fleet.csv.")
-    parser.add_argument("--qr-dir", type=Path, default=QR_DIR, help="Output folder for standard vehicle QR images.")
+    parser.add_argument("--qr-dir", type=Path, default=QR_DIR, help="Output folder for standard mining vehicle QR images.")
     parser.add_argument(
         "--large-qr-dir",
         type=Path,
         default=LARGE_QR_DIR,
-        help="Output folder for large-print vehicle QR images.",
+        help="Output folder for large-print mining vehicle QR images.",
     )
     parser.add_argument(
         "--keep-old",
@@ -99,8 +99,8 @@ def main() -> None:
         args.large_qr_dir,
         clear_existing=not args.keep_old,
     )
-    print(f"Created {len(fleet)} vehicle/equipment QR codes in {args.qr_dir}")
-    print(f"Created large-print vehicle/equipment QR codes in {args.large_qr_dir}")
+    print(f"Created {len(fleet)} mining vehicle QR codes in {args.qr_dir}")
+    print(f"Created large-print mining vehicle QR codes in {args.large_qr_dir}")
 
 
 if __name__ == "__main__":

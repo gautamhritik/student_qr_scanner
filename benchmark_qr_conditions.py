@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from student_qr_scanner.benchmark import run_benchmark, write_benchmark_outputs
+from mining_qr_scanner.benchmark import run_benchmark, write_benchmark_outputs
 
 ROOT = Path(__file__).resolve().parent
 
@@ -13,7 +13,7 @@ def main() -> None:
     parser.add_argument(
         "--input-dir",
         type=Path,
-        default=ROOT / "vehicle_qrs",
+        default=ROOT / "mining_vehicle_qrs",
         help="Folder containing QR PNG images to benchmark.",
     )
     parser.add_argument(

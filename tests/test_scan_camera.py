@@ -17,11 +17,13 @@ def valid_args(**overrides):
         "preview_scale": 1.0,
         "max_scans": None,
         "no_preview": False,
-        "vote_window": 1,
-        "min_votes": 1,
-        "mining_mode": False,
-        "camera_id": "cam-1",
+        "vote_window": 5,
+        "min_votes": 3,
+        "site_id": "mine-1",
+        "gate_id": "main-gate",
+        "camera_id": "pole-cam-1",
         "checkpoint_id": "gate-1",
+        "direction": "in",
     }
     args.update(overrides)
     return SimpleNamespace(**args)
@@ -48,8 +50,10 @@ def test_parse_camera_keeps_urls_and_converts_indexes() -> None:
         {"vote_window": 0},
         {"min_votes": 0},
         {"vote_window": 2, "min_votes": 3},
-        {"mining_mode": True, "camera_id": ""},
-        {"mining_mode": True, "checkpoint_id": ""},
+        {"site_id": ""},
+        {"gate_id": ""},
+        {"camera_id": ""},
+        {"checkpoint_id": ""},
     ],
 )
 def test_validate_args_rejects_invalid_values(override) -> None:

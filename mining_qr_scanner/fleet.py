@@ -9,21 +9,47 @@ DEFAULT_FLEET = [
     {
         "vehicle_id": "TRUCK-001",
         "plate_number": "MH12MN4101",
-        "vehicle_type": "haul_truck",
+        "vehicle_type": "dump_truck",
         "owner_operator": "Eastern Pit Logistics",
-        "site": "north-pit",
-        "assigned_route": "ore-face-to-crusher",
+        "permit_id": "PERMIT-HAUL-001",
+        "rfid_tag": "RFID-TRUCK-001",
+        "driver_id": "DRV-001",
+        "driver_name": "Ramesh Yadav",
+        "license_number": "MH-DRV-4101",
+        "contact_number": "9876543210",
+        "company": "Eastern Pit Logistics",
+        "material_type": "iron_ore",
+        "load_status": "loaded",
+        "load_weight_tons": "34.5",
+        "source_zone": "pit-a",
+        "destination_zone": "crusher-1",
+        "route_id": "route-pit-a-crusher-1",
+        "site_id": "mine-1",
+        "gate_id": "main-gate",
         "checkpoint_id": "gate-1",
         "status": "active",
     },
     {
-        "vehicle_id": "EXC-014",
-        "plate_number": "MH12MN6214",
-        "vehicle_type": "excavator",
+        "vehicle_id": "TRUCK-002",
+        "plate_number": "MH12MN4102",
+        "vehicle_type": "tipper_truck",
         "owner_operator": "Mine Operations",
-        "site": "north-pit",
-        "assigned_route": "bench-3",
-        "checkpoint_id": "pit-entry",
+        "permit_id": "PERMIT-HAUL-002",
+        "rfid_tag": "RFID-TRUCK-002",
+        "driver_id": "DRV-002",
+        "driver_name": "Suresh Patil",
+        "license_number": "MH-DRV-4102",
+        "contact_number": "9876543211",
+        "company": "Mine Operations",
+        "material_type": "coal",
+        "load_status": "loaded",
+        "load_weight_tons": "28.0",
+        "source_zone": "pit-b",
+        "destination_zone": "stockyard-2",
+        "route_id": "route-pit-b-stockyard-2",
+        "site_id": "mine-1",
+        "gate_id": "west-gate",
+        "checkpoint_id": "gate-2",
         "status": "active",
     },
     {
@@ -31,20 +57,23 @@ DEFAULT_FLEET = [
         "plate_number": "MH12MN7782",
         "vehicle_type": "water_tanker",
         "owner_operator": "Dust Control Team",
-        "site": "south-yard",
-        "assigned_route": "yard-to-haul-road",
+        "permit_id": "PERMIT-WATER-007",
+        "rfid_tag": "RFID-WATER-007",
+        "driver_id": "DRV-007",
+        "driver_name": "Imran Khan",
+        "license_number": "MH-DRV-7782",
+        "contact_number": "9876543212",
+        "company": "Dust Control Team",
+        "material_type": "water",
+        "load_status": "loaded",
+        "load_weight_tons": "18.0",
+        "source_zone": "service-yard",
+        "destination_zone": "haul-road",
+        "route_id": "route-yard-haul-road",
+        "site_id": "mine-1",
+        "gate_id": "service-gate",
         "checkpoint_id": "service-gate",
         "status": "active",
-    },
-    {
-        "vehicle_id": "DOZER-003",
-        "plate_number": "MH12MN3303",
-        "vehicle_type": "dozer",
-        "owner_operator": "Mine Operations",
-        "site": "north-pit",
-        "assigned_route": "waste-dump",
-        "checkpoint_id": "dump-entry",
-        "status": "maintenance",
     },
 ]
 
@@ -53,23 +82,48 @@ FLEET_FIELDS = [
     "plate_number",
     "vehicle_type",
     "owner_operator",
-    "site",
-    "assigned_route",
+    "permit_id",
+    "rfid_tag",
+    "driver_id",
+    "driver_name",
+    "license_number",
+    "contact_number",
+    "company",
+    "material_type",
+    "load_status",
+    "load_weight_tons",
+    "source_zone",
+    "destination_zone",
+    "route_id",
+    "site_id",
+    "gate_id",
     "checkpoint_id",
     "status",
 ]
 
+REQUIRED_FIELDS = {
+    "vehicle_id",
+    "plate_number",
+    "vehicle_type",
+    "driver_id",
+    "driver_name",
+    "license_number",
+    "material_type",
+    "load_status",
+    "source_zone",
+    "destination_zone",
+    "route_id",
+}
+
 
 def normalize_vehicle(vehicle: dict) -> dict:
     normalized = {field: str(vehicle.get(field, "")).strip() for field in FLEET_FIELDS}
-    if not normalized["vehicle_id"]:
-        raise ValueError("vehicle_id is required.")
-    if not normalized["plate_number"]:
-        raise ValueError("plate_number is required.")
-    if not normalized["vehicle_type"]:
-        raise ValueError("vehicle_type is required.")
+    missing = [field for field in sorted(REQUIRED_FIELDS) if not normalized[field]]
+    if missing:
+        raise ValueError(f"Missing required fleet fields: {', '.join(missing)}")
     normalized["plate_number"] = normalized["plate_number"].upper().replace(" ", "")
     normalized["status"] = normalized["status"] or "active"
+    normalized["load_status"] = normalized["load_status"].lower().replace(" ", "_")
     return normalized
 
 

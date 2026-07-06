@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Iterable
 
-from student_qr_scanner.mining_events import MiningEventStore
+from mining_qr_scanner.mining_events import MiningEventStore
 
 
 CSV_FIELDS = [
@@ -16,19 +16,37 @@ CSV_FIELDS = [
     "scanned_at",
     "date",
     "time",
+    "site_id",
+    "gate_id",
     "camera_id",
     "checkpoint_id",
+    "direction",
     "vehicle_id",
     "plate_number",
     "vehicle_type",
-    "site",
-    "assigned_route",
     "owner_operator",
+    "permit_id",
+    "rfid_tag",
+    "driver_id",
+    "driver_name",
+    "license_number",
+    "contact_number",
+    "company",
+    "material_type",
+    "load_status",
+    "load_weight_tons",
+    "source_zone",
+    "destination_zone",
+    "route_id",
     "detection_method",
     "scan_status",
     "anpr_plate_number",
     "anpr_match_status",
     "readiness",
+    "vote_window",
+    "min_votes",
+    "vote_count",
+    "frame_path",
     "record_file",
 ]
 
@@ -44,11 +62,21 @@ def filter_events(
     date_from: str | None = None,
     date_to: str | None = None,
     vehicle_id: str | None = None,
+    plate_number: str | None = None,
+    driver_id: str | None = None,
+    material_type: str | None = None,
+    gate_id: str | None = None,
     checkpoint_id: str | None = None,
+    direction: str | None = None,
     scan_status: str | None = None,
 ) -> list[dict]:
     vehicle_query = vehicle_id.casefold() if vehicle_id else None
+    plate_query = plate_number.casefold() if plate_number else None
+    driver_query = driver_id.casefold() if driver_id else None
+    material_query = material_type.casefold() if material_type else None
+    gate_query = gate_id.casefold() if gate_id else None
     checkpoint_query = checkpoint_id.casefold() if checkpoint_id else None
+    direction_query = direction.casefold() if direction else None
     status_query = scan_status.casefold() if scan_status else None
     filtered = []
     for event in events:
@@ -59,7 +87,17 @@ def filter_events(
             continue
         if vehicle_query and vehicle_query not in flat["vehicle_id"].casefold():
             continue
+        if plate_query and plate_query not in flat["plate_number"].casefold():
+            continue
+        if driver_query and driver_query not in flat["driver_id"].casefold():
+            continue
+        if material_query and material_query != flat["material_type"].casefold():
+            continue
+        if gate_query and gate_query != flat["gate_id"].casefold():
+            continue
         if checkpoint_query and checkpoint_query != flat["checkpoint_id"].casefold():
+            continue
+        if direction_query and direction_query != flat["direction"].casefold():
             continue
         if status_query and status_query != flat["scan_status"].casefold():
             continue
@@ -74,7 +112,13 @@ def summarize_events(events: Iterable[dict]) -> dict:
         "total_events": len(event_list),
         "unique_vehicles": len({event["vehicle_id"] for event in event_list if event["vehicle_id"]}),
         "by_vehicle": dict(sorted(Counter(event["vehicle_id"] for event in event_list if event["vehicle_id"]).items())),
+        "by_driver": dict(sorted(Counter(event["driver_id"] for event in event_list if event["driver_id"]).items())),
+        "by_gate": dict(sorted(Counter(event["gate_id"] for event in event_list if event["gate_id"]).items())),
         "by_checkpoint": dict(sorted(Counter(event["checkpoint_id"] for event in event_list if event["checkpoint_id"]).items())),
+        "by_camera": dict(sorted(Counter(event["camera_id"] for event in event_list if event["camera_id"]).items())),
+        "by_direction": dict(sorted(Counter(event["direction"] for event in event_list if event["direction"]).items())),
+        "by_route": dict(sorted(Counter(event["route_id"] for event in event_list if event["route_id"]).items())),
+        "by_material": dict(sorted(Counter(event["material_type"] for event in event_list if event["material_type"]).items())),
         "by_date": dict(sorted(Counter(event["date"] for event in event_list if event["date"]).items())),
         "by_scan_status": dict(sorted(Counter(event["scan_status"] for event in event_list if event["scan_status"]).items())),
         "by_anpr_match_status": dict(sorted(Counter(event["anpr_match_status"] for event in event_list if event["anpr_match_status"]).items())),
@@ -93,19 +137,32 @@ def write_csv(events: Iterable[dict], output_path: Path) -> Path:
     return output_path
 
 
-def write_summary(events: Iterable[dict], output_path: Path) -> Path:
+def write_summary(events: Iterable[dict], output_path: Path, vehicle_state: dict | None = None) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    summary = summarize_events(events)
+    summary["vehicle_state"] = summarize_vehicle_state(vehicle_state or {})
     output_path.write_text(
-        json.dumps(summarize_events(events), ensure_ascii=False, indent=2),
+        json.dumps(summary, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
     return output_path
 
 
-def write_html_report(events: Iterable[dict], output_path: Path) -> Path:
+def summarize_vehicle_state(vehicle_state: dict) -> dict:
+    values = list(vehicle_state.values())
+    return {
+        "total_tracked_vehicles": len(values),
+        "inside": sum(1 for item in values if item.get("current_status") == "inside"),
+        "outside": sum(1 for item in values if item.get("current_status") == "outside"),
+        "unknown": sum(1 for item in values if item.get("current_status") == "unknown"),
+    }
+
+
+def write_html_report(events: Iterable[dict], output_path: Path, vehicle_state: dict | None = None) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     event_list = list(events)
     summary = summarize_events(event_list)
+    state_summary = summarize_vehicle_state(vehicle_state or {})
     recent_events = sorted(
         [flatten_event(event) for event in event_list],
         key=lambda event: event["scanned_at"],
@@ -132,15 +189,18 @@ def write_html_report(events: Iterable[dict], output_path: Path) -> Path:
         "<tr>"
         f"<td>{escape(str(event['scanned_at']))}</td>"
         f"<td>{escape(str(event['checkpoint_id']))}</td>"
+        f"<td>{escape(str(event['direction']))}</td>"
         f"<td>{escape(str(event['vehicle_id']))}</td>"
         f"<td>{escape(str(event['plate_number']))}</td>"
+        f"<td>{escape(str(event['driver_name']))}</td>"
+        f"<td>{escape(str(event['material_type']))}</td>"
         f"<td>{escape(str(event['scan_status']))}</td>"
         f"<td>{escape(str(event['anpr_match_status']))}</td>"
         "</tr>"
         for event in recent_events
     )
     if not event_rows:
-        event_rows = "<tr><td colspan=\"6\">No mining scan events found</td></tr>"
+        event_rows = "<tr><td colspan=\"9\">No mining scan events found</td></tr>"
 
     html = f"""<!doctype html>
 <html lang="en">
@@ -165,16 +225,22 @@ def write_html_report(events: Iterable[dict], output_path: Path) -> Path:
   <div class="metrics">
     {metric("Total events", summary["total_events"])}
     {metric("Unique vehicles", summary["unique_vehicles"])}
+    {metric("Vehicles inside", state_summary["inside"])}
+    {metric("Vehicles outside", state_summary["outside"])}
     {metric("First event", summary["first_event_at"] or "N/A")}
     {metric("Last event", summary["last_event_at"] or "N/A")}
   </div>
-  <h2>Events by checkpoint</h2>
-  <table><thead><tr><th>Checkpoint</th><th>Events</th></tr></thead><tbody>{count_rows(summary["by_checkpoint"])}</tbody></table>
+  <h2>Events by gate</h2>
+  <table><thead><tr><th>Gate</th><th>Events</th></tr></thead><tbody>{count_rows(summary["by_gate"])}</tbody></table>
+  <h2>Events by material</h2>
+  <table><thead><tr><th>Material</th><th>Events</th></tr></thead><tbody>{count_rows(summary["by_material"])}</tbody></table>
+  <h2>Events by direction</h2>
+  <table><thead><tr><th>Direction</th><th>Events</th></tr></thead><tbody>{count_rows(summary["by_direction"])}</tbody></table>
   <h2>Events by status</h2>
   <table><thead><tr><th>Status</th><th>Events</th></tr></thead><tbody>{count_rows(summary["by_scan_status"])}</tbody></table>
   <h2>Recent events</h2>
   <table>
-    <thead><tr><th>Scanned at</th><th>Checkpoint</th><th>Vehicle</th><th>Plate</th><th>Status</th><th>ANPR</th></tr></thead>
+    <thead><tr><th>Scanned at</th><th>Checkpoint</th><th>Direction</th><th>Vehicle</th><th>Plate</th><th>Driver</th><th>Material</th><th>Status</th><th>ANPR</th></tr></thead>
     <tbody>{event_rows}</tbody>
   </table>
 </body>
@@ -191,7 +257,12 @@ def export_mining_events(
     date_from: str | None = None,
     date_to: str | None = None,
     vehicle_id: str | None = None,
+    plate_number: str | None = None,
+    driver_id: str | None = None,
+    material_type: str | None = None,
+    gate_id: str | None = None,
     checkpoint_id: str | None = None,
+    direction: str | None = None,
     scan_status: str | None = None,
 ) -> dict[str, Path]:
     store = MiningEventStore(database_dir)
@@ -200,12 +271,17 @@ def export_mining_events(
         date_from=date_from,
         date_to=date_to,
         vehicle_id=vehicle_id,
+        plate_number=plate_number,
+        driver_id=driver_id,
+        material_type=material_type,
+        gate_id=gate_id,
         checkpoint_id=checkpoint_id,
+        direction=direction,
         scan_status=scan_status,
     )
     output_dir.mkdir(parents=True, exist_ok=True)
     return {
-        "csv": write_csv(events, output_dir / "mining_scan_events.csv"),
-        "summary": write_summary(events, output_dir / "mining_scan_summary.json"),
-        "html": write_html_report(events, output_dir / "mining_scan_report.html"),
+        "csv": write_csv(events, output_dir / "mining_events.csv"),
+        "summary": write_summary(events, output_dir / "mining_summary.json", store.load_vehicle_state()),
+        "html": write_html_report(events, output_dir / "mining_report.html", store.load_vehicle_state()),
     }

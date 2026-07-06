@@ -7,8 +7,10 @@ __pycache__/
 venv/
 
 scan_database/
-mining_scan_database/
+mining_database/
 scans/
 exports/
 vehicle_qrs/
 vehicle_qrs_large_print/
+mining_vehicle_qrs/
+mining_vehicle_qrs_large_print/
