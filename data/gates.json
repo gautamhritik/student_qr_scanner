@@ -1,0 +1,38 @@
+[
+  {
+    "site_id": "mine-1",
+    "gate_id": "main-gate",
+    "checkpoint_id": "gate-1",
+    "camera_id": "pole-cam-1",
+    "allowed_directions": ["in", "out"],
+    "camera_role": "entry_exit",
+    "stream_hint": "camera-index-0",
+    "location": "main haul road gate",
+    "status": "active",
+    "notes": "Primary pole camera for loaded truck movement."
+  },
+  {
+    "site_id": "mine-1",
+    "gate_id": "west-gate",
+    "checkpoint_id": "gate-2",
+    "camera_id": "pole-cam-2",
+    "allowed_directions": ["in", "out"],
+    "camera_role": "entry_exit",
+    "stream_hint": "rtsp://west-gate-camera",
+    "location": "west pit access road",
+    "status": "active",
+    "notes": "Secondary gate for pit-b and stockyard movement."
+  },
+  {
+    "site_id": "mine-1",
+    "gate_id": "service-gate",
+    "checkpoint_id": "service-gate",
+    "camera_id": "service-cam-1",
+    "allowed_directions": ["in", "out"],
+    "camera_role": "service_yard",
+    "stream_hint": "camera-index-1",
+    "location": "service yard exit",
+    "status": "active",
+    "notes": "Water tankers and maintenance vehicles."
+  }
+]

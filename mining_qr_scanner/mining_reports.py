@@ -50,6 +50,26 @@ CSV_FIELDS = [
     "record_file",
 ]
 
+VEHICLE_STATE_FIELDS = [
+    "vehicle_id",
+    "plate_number",
+    "current_status",
+    "last_scan_at",
+    "last_direction",
+    "last_site_id",
+    "last_gate_id",
+    "last_checkpoint_id",
+    "last_camera_id",
+    "driver_id",
+    "driver_name",
+    "material_type",
+    "load_status",
+    "load_weight_tons",
+    "route_id",
+    "source_zone",
+    "destination_zone",
+]
+
 
 def flatten_event(event: dict) -> dict:
     flattened = {field: event.get(field, "") for field in CSV_FIELDS}
@@ -143,6 +163,38 @@ def write_summary(events: Iterable[dict], output_path: Path, vehicle_state: dict
     summary["vehicle_state"] = summarize_vehicle_state(vehicle_state or {})
     output_path.write_text(
         json.dumps(summary, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    return output_path
+
+
+def vehicle_state_rows(vehicle_state: dict) -> list[dict]:
+    rows = []
+    for item in vehicle_state.values():
+        rows.append({field: item.get(field, "") for field in VEHICLE_STATE_FIELDS})
+    return sorted(rows, key=lambda row: (row["current_status"], row["vehicle_id"]))
+
+
+def write_vehicle_state_csv(vehicle_state: dict, output_path: Path) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8", newline="") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=VEHICLE_STATE_FIELDS)
+        writer.writeheader()
+        writer.writerows(vehicle_state_rows(vehicle_state))
+    return output_path
+
+
+def write_vehicle_state_json(vehicle_state: dict, output_path: Path) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(
+            {
+                "summary": summarize_vehicle_state(vehicle_state),
+                "vehicles": vehicle_state_rows(vehicle_state),
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
     return output_path
@@ -280,8 +332,11 @@ def export_mining_events(
         scan_status=scan_status,
     )
     output_dir.mkdir(parents=True, exist_ok=True)
+    vehicle_state = store.load_vehicle_state()
     return {
         "csv": write_csv(events, output_dir / "mining_events.csv"),
-        "summary": write_summary(events, output_dir / "mining_summary.json", store.load_vehicle_state()),
-        "html": write_html_report(events, output_dir / "mining_report.html", store.load_vehicle_state()),
+        "summary": write_summary(events, output_dir / "mining_summary.json", vehicle_state),
+        "html": write_html_report(events, output_dir / "mining_report.html", vehicle_state),
+        "vehicle_state_csv": write_vehicle_state_csv(vehicle_state, output_dir / "vehicle_state.csv"),
+        "vehicle_state_json": write_vehicle_state_json(vehicle_state, output_dir / "vehicle_state.json"),
     }

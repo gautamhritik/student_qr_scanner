@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import json
 
-from mining_qr_scanner.mining_reports import export_mining_events, filter_events, flatten_event, summarize_events
+from mining_qr_scanner.mining_reports import (
+    export_mining_events,
+    filter_events,
+    flatten_event,
+    summarize_events,
+    vehicle_state_rows,
+)
 
 
 def event(**overrides) -> dict:
@@ -82,5 +88,18 @@ def test_export_mining_events_writes_files_and_state_summary(tmp_path) -> None:
     assert outputs["csv"].name == "mining_events.csv"
     assert outputs["summary"].name == "mining_summary.json"
     assert outputs["html"].name == "mining_report.html"
+    assert outputs["vehicle_state_csv"].name == "vehicle_state.csv"
+    assert outputs["vehicle_state_json"].name == "vehicle_state.json"
     summary = json.loads(outputs["summary"].read_text(encoding="utf-8"))
     assert summary["vehicle_state"]["inside"] == 1
+
+
+def test_vehicle_state_rows_are_flattened_and_sorted() -> None:
+    rows = vehicle_state_rows(
+        {
+            "TRUCK-002": {"vehicle_id": "TRUCK-002", "current_status": "outside"},
+            "TRUCK-001": {"vehicle_id": "TRUCK-001", "current_status": "inside"},
+        }
+    )
+
+    assert [row["vehicle_id"] for row in rows] == ["TRUCK-001", "TRUCK-002"]

@@ -33,6 +33,20 @@ python manage_fleet.py add --vehicle-id TRUCK-100 --plate-number MH12AB1000 --ve
 python manage_fleet.py remove --vehicle-id TRUCK-100
 ```
 
+## Gate And Camera Registry
+
+Pole-camera assignments are stored in `data/gates.json`. The scanner validates
+`site_id`, `gate_id`, `checkpoint_id`, `camera_id`, and `direction` against this
+registry before opening the camera.
+
+Useful commands:
+
+```powershell
+python manage_gates.py list
+python manage_gates.py add --site-id mine-1 --gate-id north-gate --checkpoint-id gate-3 --camera-id pole-cam-3 --allowed-directions in,out --location "north haul road"
+python manage_gates.py remove --site-id mine-1 --gate-id north-gate --checkpoint-id gate-3 --camera-id pole-cam-3
+```
+
 ## Generate Mining Vehicle QR Codes
 
 ```powershell
@@ -67,6 +81,7 @@ python scan_camera.py --direction in --vote-window 5 --min-votes 3
 python scan_camera.py --direction in --save-scans
 python scan_camera.py --direction in --no-preview
 python scan_camera.py --direction in --max-scans 10
+python scan_camera.py --direction in --skip-gate-validation
 ```
 
 The scanner uses majority voting by default so a single noisy frame does not
@@ -102,10 +117,25 @@ The exporter creates:
 - `exports/mining_events.csv`
 - `exports/mining_summary.json`
 - `exports/mining_report.html`
+- `exports/vehicle_state.csv`
+- `exports/vehicle_state.json`
 
 Reports summarize current inside/outside status, vehicle movement, drivers,
 routes, materials, gates, cameras, duplicate-suppressed scans, validation
 failures, and ANPR placeholder match status.
+
+## Current Vehicle Status
+
+Use `vehicle_status.py` for a quick terminal view of the current inside/outside
+state without opening JSON files.
+
+```powershell
+python vehicle_status.py
+python vehicle_status.py --status inside
+python vehicle_status.py --gate-id main-gate
+python vehicle_status.py --material-type iron_ore --json
+python vehicle_status.py --csv-output exports\vehicle_state_now.csv
+```
 
 ## Rugged-Condition Benchmark
 

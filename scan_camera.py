@@ -7,6 +7,7 @@ from pathlib import Path
 
 import cv2
 
+from mining_qr_scanner.gate_registry import validate_scanner_assignment
 from mining_qr_scanner.mining_events import MiningEventStore, build_scan_event
 from mining_qr_scanner.scanner import LightingAdaptiveQRScanner, format_payload
 
@@ -166,6 +167,17 @@ def main() -> None:
     )
     parser.add_argument("--direction", choices=["in", "out"], required=True, help="Vehicle movement direction for this scanner.")
     parser.add_argument(
+        "--gate-registry",
+        type=Path,
+        default=ROOT / "data" / "gates.json",
+        help="Gate/camera registry used to validate scanner assignment.",
+    )
+    parser.add_argument(
+        "--skip-gate-validation",
+        action="store_true",
+        help="Allow ad-hoc scanner metadata that is not present in the gate registry.",
+    )
+    parser.add_argument(
         "--database-dir",
         type=Path,
         default=ROOT / "mining_database",
@@ -189,6 +201,19 @@ def main() -> None:
     )
     args = parser.parse_args()
     validate_args(args)
+    gate_config = None
+    if not args.skip_gate_validation:
+        try:
+            gate_config = validate_scanner_assignment(
+                args.gate_registry,
+                site_id=args.site_id,
+                gate_id=args.gate_id,
+                checkpoint_id=args.checkpoint_id,
+                camera_id=args.camera_id,
+                direction=args.direction,
+            )
+        except ValueError as exc:
+            raise SystemExit(str(exc)) from exc
 
     cap = open_camera(parse_camera(args.camera), args.backend)
     if not cap.isOpened():
@@ -210,6 +235,10 @@ def main() -> None:
         f"Site: {args.site_id}, gate: {args.gate_id}, checkpoint: {args.checkpoint_id}, "
         f"camera: {args.camera_id}, direction: {args.direction}"
     )
+    if gate_config:
+        print(f"Gate registry: {gate_config['location']} ({gate_config['camera_role']})")
+    else:
+        print("Gate registry validation skipped.")
     print(f"Camera frame: {actual_width}x{actual_height}, digital zoom: {args.digital_zoom:g}x")
     print(f"Camera backend: {args.backend}")
     if args.vote_window > 1:
