@@ -137,6 +137,39 @@ python vehicle_status.py --material-type iron_ore --json
 python vehicle_status.py --csv-output exports\vehicle_state_now.csv
 ```
 
+## Scan Saved Images
+
+Use `scan_images.py` to process camera snapshots, test images, or a folder of
+field captures without opening a live camera.
+
+```powershell
+python scan_images.py captures\ --direction in --site-id mine-1 --gate-id main-gate --checkpoint-id gate-1 --camera-id pole-cam-1
+python scan_images.py captures\failed_frame.jpg --direction out --save-failures
+```
+
+Saved-image scans write into the same `mining_database/` event history and update
+`vehicle_state.json` for accepted movement events.
+
+## Movement Audit
+
+Use `event_audit.py` to find operational anomalies in event history:
+
+```powershell
+python event_audit.py
+python event_audit.py --stale-inside-hours 8
+python event_audit.py --rebuild-state
+```
+
+The audit creates:
+
+- `exports/movement_audit.json`
+- `exports/movement_audit.csv`
+- `exports/movement_audit.html`
+
+It flags validation failures, duplicate-suppressed scans, repeated accepted
+directions, vehicles scanned out without a prior accepted in movement, and
+vehicles still marked inside beyond the selected hour threshold.
+
 ## Rugged-Condition Benchmark
 
 Use the benchmark tool to test QR decoding under synthetic mining conditions:

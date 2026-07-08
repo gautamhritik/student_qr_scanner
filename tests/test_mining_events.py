@@ -86,3 +86,14 @@ def test_duplicate_suppressed_event_does_not_update_vehicle_state(tmp_path) -> N
 
     assert store.load_vehicle_state()["TRUCK-001"]["current_status"] == "inside"
     assert store.load_events()[1]["scan_status"] == "duplicate_suppressed"
+
+
+def test_rebuild_vehicle_state_uses_last_accepted_event_only(tmp_path) -> None:
+    store = MiningEventStore(tmp_path / "mining_database")
+    store.save_event(build_event("in"))
+    store.save_event(build_event("out", status="duplicate_suppressed"))
+    store.save_event(build_event("out"))
+
+    rebuilt = store.rebuild_vehicle_state()
+
+    assert rebuilt["TRUCK-001"]["current_status"] == "outside"
