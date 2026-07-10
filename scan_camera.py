@@ -9,6 +9,7 @@ import cv2
 
 from mining_qr_scanner.gate_registry import validate_scanner_assignment
 from mining_qr_scanner.mining_events import MiningEventStore, build_scan_event
+from mining_qr_scanner.opencv_environment import preview_fix_hint
 from mining_qr_scanner.scanner import LightingAdaptiveQRScanner, format_payload
 
 ROOT = Path(__file__).resolve().parent
@@ -104,6 +105,14 @@ def show_preview(window_name: str, frame, preview_scale: float) -> bool:
         return True
     except cv2.error:
         return False
+
+
+def preview_unavailable_message() -> str:
+    return (
+        "OpenCV preview is unavailable in this Python environment. "
+        "Continuing in terminal-only mode; press Ctrl+C to stop.\n"
+        f"{preview_fix_hint()}"
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -283,10 +292,7 @@ def main() -> None:
                     if preview_enabled:
                         if not show_preview("Mining Vehicle QR Scanner", frame, args.preview_scale):
                             preview_enabled = False
-                            print(
-                                "OpenCV preview is unavailable in this environment. "
-                                "Continuing in terminal-only mode; press Ctrl+C to stop."
-                            )
+                            print(preview_unavailable_message())
                     if preview_enabled and cv2.waitKey(1) & 0xFF == ord("q"):
                         break
                     continue
@@ -353,10 +359,7 @@ def main() -> None:
             if preview_enabled:
                 if not show_preview("Mining Vehicle QR Scanner", frame, args.preview_scale):
                     preview_enabled = False
-                    print(
-                        "OpenCV preview is unavailable in this environment. "
-                        "Continuing in terminal-only mode; press Ctrl+C to stop."
-                    )
+                    print(preview_unavailable_message())
 
             if preview_enabled and cv2.waitKey(1) & 0xFF == ord("q"):
                 break

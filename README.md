@@ -99,6 +99,21 @@ python scan_camera.py --direction in --max-scans 10
 python scan_camera.py --direction in --skip-gate-validation
 ```
 
+If the scanner says OpenCV preview is unavailable, QR scanning still continues in
+terminal-only mode. Check the installed OpenCV build with:
+
+```powershell
+python check_opencv.py
+```
+
+If `opencv-python-headless` is installed, remove it and reinstall the GUI-enabled
+package:
+
+```powershell
+python -m pip uninstall opencv-python-headless -y
+python -m pip install --upgrade --force-reinstall opencv-python
+```
+
 The scanner uses majority voting by default so a single noisy frame does not
 create a movement event. Duplicate scans for the same vehicle, checkpoint, and
 direction within the cooldown period are stored as `duplicate_suppressed` and do

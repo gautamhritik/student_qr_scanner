@@ -118,6 +118,15 @@ def test_show_preview_returns_false_when_imshow_fails(monkeypatch) -> None:
     assert scan_camera.show_preview("window", object(), 1.0) is False
 
 
+def test_preview_unavailable_message_includes_repair_hint(monkeypatch) -> None:
+    monkeypatch.setattr(scan_camera, "preview_fix_hint", lambda: "repair command")
+
+    message = scan_camera.preview_unavailable_message()
+
+    assert "terminal-only mode" in message
+    assert "repair command" in message
+
+
 def test_show_preview_scales_frame(monkeypatch):
     calls = []
 
