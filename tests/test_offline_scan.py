@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 
 import cv2
 import numpy as np
 
 from mining_qr_scanner.mining_events import MiningEventStore
 from mining_qr_scanner.offline_scan import collect_image_paths, scan_image_paths
+from mining_qr_scanner.payloads import build_qr_payload
 
 
 def payload() -> str:
     return json.dumps(
-        {
+        build_qr_payload(
+            {
             "vehicle_id": "TRUCK-001",
             "plate_number": "MH12MN4101",
             "vehicle_type": "dump_truck",
@@ -23,7 +26,9 @@ def payload() -> str:
             "source_zone": "pit-a",
             "destination_zone": "crusher-1",
             "route_id": "route-pit-a-crusher-1",
-        }
+            },
+            issued_at=datetime(2026, 7, 8).date(),
+        )
     )
 
 

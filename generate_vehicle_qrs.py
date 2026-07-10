@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import argparse
 import csv
-import json
+from datetime import date
 from pathlib import Path
 
 import qrcode
 
 from mining_qr_scanner.fleet import FLEET_FIELDS, load_fleet
+from mining_qr_scanner.payloads import build_qr_payload, compact_payload_json
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
@@ -16,8 +17,10 @@ QR_DIR = ROOT / "mining_vehicle_qrs"
 LARGE_QR_DIR = ROOT / "mining_vehicle_qrs_large_print"
 
 
-def qr_payload(vehicle: dict) -> str:
-    return json.dumps(vehicle, ensure_ascii=False, separators=(",", ":"))
+def qr_payload(vehicle: dict, *, issued_at: date | None = None, valid_days: int | None = 365) -> str:
+    return compact_payload_json(
+        build_qr_payload(vehicle, issued_at=issued_at, valid_days=valid_days)
+    )
 
 
 def make_qr(payload: str, output_path: Path, box_size: int = 12, border: int = 4) -> None:
@@ -53,6 +56,7 @@ def generate_vehicle_qr_files(
     large_qr_dir: Path,
     *,
     clear_existing: bool = True,
+    valid_days: int | None = 365,
 ) -> None:
     if clear_existing:
         remove_old_pngs(qr_dir)
@@ -63,7 +67,7 @@ def generate_vehicle_qr_files(
 
     for index, vehicle in enumerate(fleet, start=1):
         slug = vehicle["vehicle_id"].lower().replace(" ", "_")
-        payload = qr_payload(vehicle)
+        payload = qr_payload(vehicle, valid_days=valid_days)
         make_qr(payload, qr_dir / f"{index:02d}_{slug}.png")
         make_qr(
             payload,
@@ -89,7 +93,20 @@ def main() -> None:
         action="store_true",
         help="Do not remove existing PNG files before generating new QR codes.",
     )
+    parser.add_argument(
+        "--valid-days",
+        type=int,
+        default=365,
+        help="Number of days before generated QR payloads expire.",
+    )
+    parser.add_argument(
+        "--no-expiry",
+        action="store_true",
+        help="Generate QR payloads without an expires_on date.",
+    )
     args = parser.parse_args()
+    if args.valid_days <= 0:
+        raise SystemExit("--valid-days must be a positive integer.")
 
     fleet = load_fleet(args.registry)
     write_fleet_data(fleet, args.data_dir)
@@ -98,6 +115,7 @@ def main() -> None:
         args.qr_dir,
         args.large_qr_dir,
         clear_existing=not args.keep_old,
+        valid_days=None if args.no_expiry else args.valid_days,
     )
     print(f"Created {len(fleet)} mining vehicle QR codes in {args.qr_dir}")
     print(f"Created large-print mining vehicle QR codes in {args.large_qr_dir}")

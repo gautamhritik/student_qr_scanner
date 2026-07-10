@@ -4,6 +4,7 @@ import json
 from datetime import datetime, timezone
 
 from mining_qr_scanner.mining_events import MiningEventStore, build_scan_event, parse_vehicle_payload
+from mining_qr_scanner.payloads import build_qr_payload
 
 
 def payload(**overrides) -> str:
@@ -22,7 +23,7 @@ def payload(**overrides) -> str:
         "route_id": "route-pit-a-crusher-1",
     }
     data.update(overrides)
-    return json.dumps(data)
+    return json.dumps(build_qr_payload(data, issued_at=datetime(2026, 7, 6).date()))
 
 
 def build_event(direction="in", status=None) -> dict:
@@ -97,3 +98,12 @@ def test_rebuild_vehicle_state_uses_last_accepted_event_only(tmp_path) -> None:
     rebuilt = store.rebuild_vehicle_state()
 
     assert rebuilt["TRUCK-001"]["current_status"] == "outside"
+
+
+def test_parse_vehicle_payload_rejects_checksum_tampering() -> None:
+    data = json.loads(payload())
+    data["plate_number"] = "MH12MN9999"
+
+    _, errors = parse_vehicle_payload(json.dumps(data))
+
+    assert "checksum mismatch" in errors

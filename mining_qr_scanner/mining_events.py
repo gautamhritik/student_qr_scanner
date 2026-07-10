@@ -6,6 +6,8 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from uuid import uuid4
 
+from mining_qr_scanner.payloads import validate_payload_integrity
+
 
 REQUIRED_PAYLOAD_FIELDS = {
     "vehicle_id",
@@ -41,6 +43,7 @@ def parse_vehicle_payload(payload: str) -> tuple[dict, list[str]]:
         data["plate_number"] = str(data["plate_number"]).upper().replace(" ", "")
     if "load_status" in data:
         data["load_status"] = str(data["load_status"]).lower().replace(" ", "_")
+    errors.extend(validate_payload_integrity(data))
     return data, errors
 
 
@@ -114,6 +117,11 @@ def build_scan_event(
         "source_zone": payload_info.get("source_zone", ""),
         "destination_zone": payload_info.get("destination_zone", ""),
         "route_id": payload_info.get("route_id", ""),
+        "payload_version": payload_info.get("payload_version", ""),
+        "payload_id": payload_info.get("payload_id", ""),
+        "issued_at": payload_info.get("issued_at", ""),
+        "expires_on": payload_info.get("expires_on", ""),
+        "checksum": payload_info.get("checksum", ""),
         "anpr_plate_number": anpr_plate_number or "",
         "anpr_match_status": anpr_match_status(payload_info, anpr_plate_number),
         "readiness": readiness,

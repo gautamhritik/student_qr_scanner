@@ -51,6 +51,8 @@ python manage_gates.py remove --site-id mine-1 --gate-id north-gate --checkpoint
 
 ```powershell
 python generate_vehicle_qrs.py
+python generate_vehicle_qrs.py --valid-days 180
+python generate_vehicle_qrs.py --no-expiry
 ```
 
 The generator creates:
@@ -60,6 +62,18 @@ The generator creates:
 - `data/fleet.csv`
 
 Use the large-print QR files for pole-camera and distance testing.
+
+Generated QR payloads include `payload_version`, `payload_id`, `issued_at`,
+optional `expires_on`, and a checksum. The scanner validates these fields so a
+modified or expired QR payload is stored as a validation failure instead of a
+trusted movement event.
+
+Inspect a QR image or raw payload:
+
+```powershell
+python inspect_qr_payload.py --image mining_vehicle_qrs\02_truck-002.png
+python inspect_qr_payload.py --payload-file payload.txt --json
+```
 
 ## Run A Gate Scanner
 

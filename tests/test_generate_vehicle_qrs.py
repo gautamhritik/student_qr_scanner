@@ -39,6 +39,10 @@ def test_qr_payload_contains_vehicle_driver_and_cargo_data() -> None:
     assert data["vehicle_id"] == "TRUCK-001"
     assert data["driver_id"] == "DRV-001"
     assert data["material_type"] == "iron_ore"
+    assert data["payload_version"] == "1.0"
+    assert data["payload_id"]
+    assert data["checksum"]
+    assert data["expires_on"]
     assert ", " not in payload
     assert ": " not in payload
 
