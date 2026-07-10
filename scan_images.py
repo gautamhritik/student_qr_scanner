@@ -10,19 +10,24 @@ from mining_qr_scanner.offline_scan import collect_image_paths, scan_image_paths
 ROOT = Path(__file__).resolve().parent
 
 
-def main() -> None:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Scan mining vehicle QR codes from saved image files.")
     parser.add_argument("inputs", nargs="+", type=Path, help="Image files or folders to scan.")
     parser.add_argument("--site-id", default="mine-1")
     parser.add_argument("--gate-id", default="main-gate")
     parser.add_argument("--checkpoint-id", default="gate-1")
     parser.add_argument("--camera-id", default="pole-cam-1")
-    parser.add_argument("--direction", choices=["in", "out"], required=True)
+    parser.add_argument("--direction", choices=["in", "out"], default="in", help="Vehicle movement direction. Defaults to in.")
     parser.add_argument("--database-dir", type=Path, default=ROOT / "mining_database")
     parser.add_argument("--gate-registry", type=Path, default=ROOT / "data" / "gates.json")
     parser.add_argument("--skip-gate-validation", action="store_true")
     parser.add_argument("--save-failures", action="store_true", help="Store image read failures and no-QR detections.")
     parser.add_argument("--anpr-plate-number", help="Optional ANPR placeholder value to compare with QR plate.")
+    return parser
+
+
+def main() -> None:
+    parser = build_parser()
     args = parser.parse_args()
 
     if not args.skip_gate_validation:

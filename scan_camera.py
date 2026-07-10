@@ -106,7 +106,7 @@ def show_preview(window_name: str, frame, preview_scale: float) -> bool:
         return False
 
 
-def main() -> None:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Scan mining vehicle QR codes from a pole/gate camera.")
     parser.add_argument("--camera", default="0", help="Camera index or stream URL.")
     parser.add_argument(
@@ -165,7 +165,12 @@ def main() -> None:
         default="gate-1",
         help="Checkpoint identifier saved in movement events.",
     )
-    parser.add_argument("--direction", choices=["in", "out"], required=True, help="Vehicle movement direction for this scanner.")
+    parser.add_argument(
+        "--direction",
+        choices=["in", "out"],
+        default="in",
+        help="Vehicle movement direction for this scanner. Defaults to in.",
+    )
     parser.add_argument(
         "--gate-registry",
         type=Path,
@@ -199,6 +204,11 @@ def main() -> None:
         default=3,
         help="Minimum matching decoded frames required before logging.",
     )
+    return parser
+
+
+def main() -> None:
+    parser = build_parser()
     args = parser.parse_args()
     validate_args(args)
     gate_config = None

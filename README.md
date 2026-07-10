@@ -83,6 +83,7 @@ can be passed as URLs.
 ```powershell
 python scan_camera.py --camera 0 --site-id mine-1 --gate-id main-gate --checkpoint-id gate-1 --camera-id pole-cam-1 --direction in
 python scan_camera.py --camera 0 --site-id mine-1 --gate-id main-gate --checkpoint-id gate-1 --camera-id pole-cam-1 --direction out
+python scan_camera.py
 ```
 
 Useful options:
@@ -178,6 +179,7 @@ field captures without opening a live camera.
 ```powershell
 python scan_images.py captures\ --direction in --site-id mine-1 --gate-id main-gate --checkpoint-id gate-1 --camera-id pole-cam-1
 python scan_images.py captures\failed_frame.jpg --direction out --save-failures
+python scan_images.py captures\
 ```
 
 Saved-image scans write into the same `mining_database/` event history and update

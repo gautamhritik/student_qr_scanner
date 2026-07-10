@@ -65,6 +65,16 @@ def test_validate_args_accepts_valid_values() -> None:
     scan_camera.validate_args(valid_args(max_scans=5, preview_scale=0.5))
 
 
+def test_parser_defaults_allow_plain_scanner_command() -> None:
+    parser = scan_camera.build_parser()
+
+    args = parser.parse_args([])
+
+    assert args.direction == "in"
+    assert args.site_id == "mine-1"
+    assert args.gate_id == "main-gate"
+
+
 def test_expected_backends_are_available() -> None:
     assert {"auto", "any", "dshow", "msmf", "v4l2"} <= set(scan_camera.BACKENDS)
 
