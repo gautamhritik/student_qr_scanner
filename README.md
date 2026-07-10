@@ -138,6 +138,25 @@ Reports summarize current inside/outside status, vehicle movement, drivers,
 routes, materials, gates, cameras, duplicate-suppressed scans, validation
 failures, and ANPR placeholder match status.
 
+## Export Trip Reports
+
+Use `export_trips.py` to reconstruct vehicle trips by pairing accepted `in` and
+`out` scan events. It calculates trip duration, completed tonnage, open trips,
+missing exits, and orphan exits.
+
+```powershell
+python export_trips.py
+python export_trips.py --trip-status completed
+python export_trips.py --material-type iron_ore
+python export_trips.py --route-id route-pit-a-crusher-1
+```
+
+The trip exporter creates:
+
+- `exports/mining_trips.csv`
+- `exports/mining_trips_summary.json`
+- `exports/mining_trips_report.html`
+
 ## Current Vehicle Status
 
 Use `vehicle_status.py` for a quick terminal view of the current inside/outside
