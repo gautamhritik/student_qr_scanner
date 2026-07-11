@@ -173,6 +173,24 @@ The trip exporter creates:
 - `exports/mining_trips_summary.json`
 - `exports/mining_trips_report.html`
 
+## Operations Summary Dashboard
+
+Use `operations_summary.py` when you want one daily operations pack that combines
+event totals, current vehicle state, trip tonnage, audit issues, and OpenCV
+camera-environment diagnostics.
+
+```powershell
+python operations_summary.py
+python operations_summary.py --date-from 2026-07-01 --date-to 2026-07-31
+python operations_summary.py --stale-inside-hours 8
+python operations_summary.py --skip-environment
+```
+
+The dashboard exporter creates:
+
+- `exports/operations_summary.json`
+- `exports/operations_summary.html`
+
 ## Current Vehicle Status
 
 Use `vehicle_status.py` for a quick terminal view of the current inside/outside
