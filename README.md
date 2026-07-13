@@ -173,6 +173,24 @@ The trip exporter creates:
 - `exports/mining_trips_summary.json`
 - `exports/mining_trips_report.html`
 
+## Export Shift Reports
+
+Use `export_shift_report.py` to summarize production movement by day and night
+shift. By default, day shift starts at 06:00 and night shift starts at 18:00.
+Night scans after midnight are grouped with the previous evening's night shift.
+
+```powershell
+python export_shift_report.py
+python export_shift_report.py --date-from 2026-07-01 --date-to 2026-07-31
+python export_shift_report.py --day-start-hour 7 --night-start-hour 19
+```
+
+The shift exporter creates:
+
+- `exports/mining_shift_report.csv`
+- `exports/mining_shift_summary.json`
+- `exports/mining_shift_report.html`
+
 ## Operations Summary Dashboard
 
 Use `operations_summary.py` when you want one daily operations pack that combines
