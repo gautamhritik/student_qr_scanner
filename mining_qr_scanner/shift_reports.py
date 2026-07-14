@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import Counter
 import csv
 from datetime import datetime, timedelta
 from html import escape
@@ -95,6 +95,18 @@ def most_common_label(counter: Counter) -> str:
     return sorted(counter.items(), key=lambda item: (-item[1], item[0]))[0][0]
 
 
+def safe_float(value) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def shift_sort_key(shift_key: str) -> tuple[str, int]:
+    shift_date, shift_name = shift_key.rsplit("-", 1)
+    return (shift_date, 0 if shift_name == "day" else 1)
+
+
 def summarize_shifts(
     events: Iterable[dict],
     trips: Iterable[dict],
@@ -146,15 +158,15 @@ def summarize_shifts(
         "open_trips": 0,
         "total_completed_tonnage": 0.0,
     }
-    for key in sorted(buckets):
+    for key in sorted(buckets, key=shift_sort_key):
         bucket = buckets[key]
         event_rows = bucket["events"]
         trip_rows = bucket["trips"]
         completed = [trip for trip in trip_rows if trip.get("trip_status") == "completed"]
         durations = [
-            float(trip["duration_minutes"])
+            duration
             for trip in completed
-            if trip.get("duration_minutes") != ""
+            if (duration := safe_float(trip.get("duration_minutes"))) is not None
         ]
         tonnage = round(sum(numeric_tons(trip.get("load_weight_tons")) for trip in completed), 2)
         row = {
@@ -213,16 +225,16 @@ def write_shift_html(summary: dict, output_path: Path) -> Path:
     totals = summary["totals"]
     rows = "\n".join(
         "<tr>"
-        f"<td>{escape(row['shift_key'])}</td>"
-        f"<td>{escape(str(row['event_count']))}</td>"
-        f"<td>{escape(str(row['in_count']))}</td>"
-        f"<td>{escape(str(row['out_count']))}</td>"
-        f"<td>{escape(str(row['completed_trips']))}</td>"
-        f"<td>{escape(str(row['total_completed_tonnage']))}</td>"
-        f"<td>{escape(str(row['average_trip_minutes']))}</td>"
-        f"<td>{escape(row['top_gate'])}</td>"
-        f"<td>{escape(row['top_material'])}</td>"
-        f"<td>{escape(row['top_route'])}</td>"
+        f"<td>{escape(str(row.get('shift_key', '')))}</td>"
+        f"<td>{escape(str(row.get('event_count', '')))}</td>"
+        f"<td>{escape(str(row.get('in_count', '')))}</td>"
+        f"<td>{escape(str(row.get('out_count', '')))}</td>"
+        f"<td>{escape(str(row.get('completed_trips', '')))}</td>"
+        f"<td>{escape(str(row.get('total_completed_tonnage', '')))}</td>"
+        f"<td>{escape(str(row.get('average_trip_minutes', '')))}</td>"
+        f"<td>{escape(str(row.get('top_gate', '')))}</td>"
+        f"<td>{escape(str(row.get('top_material', '')))}</td>"
+        f"<td>{escape(str(row.get('top_route', '')))}</td>"
         "</tr>"
         for row in summary["shifts"]
     )
@@ -277,9 +289,10 @@ def export_shift_report(
     night_start_hour: int = 18,
 ) -> dict[str, Path]:
     store = MiningEventStore(database_dir)
-    events = filter_events(store.load_events(), date_from=date_from, date_to=date_to)
+    all_events = store.load_events()
+    events = filter_events(all_events, date_from=date_from, date_to=date_to)
     trips = filter_trips(
-        reconstruct_trips(store.load_events()),
+        reconstruct_trips(all_events),
         date_from=date_from,
         date_to=date_to,
     )

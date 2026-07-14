@@ -63,12 +63,27 @@ def test_summarize_shifts_groups_events_trips_and_tonnage() -> None:
     rows = {row["shift_key"]: row for row in summary["shifts"]}
 
     assert summary["total_shifts"] == 2
+    assert [row["shift_key"] for row in summary["shifts"]] == ["2026-07-10-day", "2026-07-10-night"]
     assert rows["2026-07-10-day"]["event_count"] == 2
     assert rows["2026-07-10-day"]["completed_trips"] == 1
     assert rows["2026-07-10-day"]["total_completed_tonnage"] == 34.5
     assert rows["2026-07-10-night"]["event_count"] == 1
     assert rows["2026-07-10-night"]["open_trips"] == 1
     assert rows["2026-07-10-night"]["top_material"] == "coal"
+
+
+def test_summarize_shifts_ignores_invalid_duration_values() -> None:
+    events = [
+        event(event_id="day-in"),
+        event(event_id="day-out", direction="out", scanned_at="2026-07-10T09:45:00+05:30"),
+    ]
+    trips = reconstruct_trips(events)
+    trips[0]["duration_minutes"] = "not-a-number"
+
+    summary = summarize_shifts(events, trips)
+
+    assert summary["shifts"][0]["completed_trips"] == 1
+    assert summary["shifts"][0]["average_trip_minutes"] == 0
 
 
 def test_export_shift_report_writes_csv_json_and_html(tmp_path) -> None:

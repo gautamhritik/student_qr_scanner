@@ -90,10 +90,10 @@ def write_operations_html(summary: dict, output_path: Path) -> Path:
 
     issue_rows = "\n".join(
         "<tr>"
-        f"<td>{escape(issue['severity'])}</td>"
-        f"<td>{escape(issue['issue_type'])}</td>"
-        f"<td>{escape(issue['vehicle_id'])}</td>"
-        f"<td>{escape(issue['message'])}</td>"
+        f"<td>{escape(str(issue.get('severity', '')))}</td>"
+        f"<td>{escape(str(issue.get('issue_type', '')))}</td>"
+        f"<td>{escape(str(issue.get('vehicle_id', '')))}</td>"
+        f"<td>{escape(str(issue.get('message', '')))}</td>"
         "</tr>"
         for issue in audit["top_issues"]
     )
@@ -101,6 +101,14 @@ def write_operations_html(summary: dict, output_path: Path) -> Path:
         issue_rows = "<tr><td colspan=\"4\">No audit issues found</td></tr>"
 
     preview_status = "available" if environment.get("preview_supported") else "unavailable"
+    environment_section = ""
+    if environment:
+        environment_section = (
+            "<h2>OpenCV Environment</h2>"
+            f"<p>Version: {escape(str(environment.get('cv2_version', 'N/A')))} | "
+            f"Preview: {escape(preview_status)} | "
+            f"GUI: {escape(str(environment.get('gui_backend', 'N/A')))}</p>"
+        )
     html = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -140,8 +148,7 @@ def write_operations_html(summary: dict, output_path: Path) -> Path:
   <h2>Audit Issues</h2>
   <table><thead><tr><th>Severity</th><th>Type</th><th>Vehicle</th><th>Message</th></tr></thead><tbody>{issue_rows}</tbody></table>
 
-  <h2>OpenCV Environment</h2>
-  <p>Version: {escape(str(environment.get("cv2_version", "N/A")))} | Preview: {escape(preview_status)} | GUI: {escape(str(environment.get("gui_backend", "N/A")))}</p>
+  {environment_section}
 </body>
 </html>
 """

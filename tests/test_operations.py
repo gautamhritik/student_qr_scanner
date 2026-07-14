@@ -88,4 +88,5 @@ def test_export_operations_summary_writes_json_and_html_without_environment(tmp_
     html = outputs["html"].read_text(encoding="utf-8")
     assert "opencv_environment" not in summary
     assert "Mining Operations Summary" in html
+    assert "OpenCV Environment" not in html
     assert "TRUCK-001" not in html
