@@ -201,6 +201,7 @@ class MiningEventStore:
     def _write_json(path: Path, data) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         content = json.dumps(data, ensure_ascii=False, indent=2)
+        temp_path = None
         with NamedTemporaryFile(
             "w",
             delete=False,
@@ -211,28 +212,32 @@ class MiningEventStore:
         ) as temp_file:
             temp_file.write(content)
             temp_path = Path(temp_file.name)
-        temp_path.replace(path)
+        try:
+            temp_path.replace(path)
+        finally:
+            if temp_path.exists():
+                temp_path.unlink()
 
 
 def vehicle_state_from_event(event: dict) -> dict:
-        direction = event.get("direction")
-        current_status = "inside" if direction == "in" else "outside" if direction == "out" else "unknown"
-        return {
-            "vehicle_id": event.get("vehicle_id", ""),
-            "plate_number": event.get("plate_number", ""),
-            "current_status": current_status,
-            "last_scan_at": event.get("scanned_at", ""),
-            "last_direction": direction,
-            "last_site_id": event.get("site_id", ""),
-            "last_gate_id": event.get("gate_id", ""),
-            "last_checkpoint_id": event.get("checkpoint_id", ""),
-            "last_camera_id": event.get("camera_id", ""),
-            "driver_id": event.get("driver_id", ""),
-            "driver_name": event.get("driver_name", ""),
-            "material_type": event.get("material_type", ""),
-            "load_status": event.get("load_status", ""),
-            "load_weight_tons": event.get("load_weight_tons", ""),
-            "route_id": event.get("route_id", ""),
-            "source_zone": event.get("source_zone", ""),
-            "destination_zone": event.get("destination_zone", ""),
-        }
+    direction = event.get("direction")
+    current_status = "inside" if direction == "in" else "outside" if direction == "out" else "unknown"
+    return {
+        "vehicle_id": event.get("vehicle_id", ""),
+        "plate_number": event.get("plate_number", ""),
+        "current_status": current_status,
+        "last_scan_at": event.get("scanned_at", ""),
+        "last_direction": direction,
+        "last_site_id": event.get("site_id", ""),
+        "last_gate_id": event.get("gate_id", ""),
+        "last_checkpoint_id": event.get("checkpoint_id", ""),
+        "last_camera_id": event.get("camera_id", ""),
+        "driver_id": event.get("driver_id", ""),
+        "driver_name": event.get("driver_name", ""),
+        "material_type": event.get("material_type", ""),
+        "load_status": event.get("load_status", ""),
+        "load_weight_tons": event.get("load_weight_tons", ""),
+        "route_id": event.get("route_id", ""),
+        "source_zone": event.get("source_zone", ""),
+        "destination_zone": event.get("destination_zone", ""),
+    }

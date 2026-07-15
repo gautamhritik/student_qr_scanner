@@ -52,6 +52,13 @@ def numeric_tons(value) -> float:
         return 0.0
 
 
+def numeric_duration(value) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def build_trip(in_event: dict | None, out_event: dict | None, status: str) -> dict:
     source = in_event or out_event or {}
     in_time = parse_time(in_event.get("scanned_at", "")) if in_event else None
@@ -159,11 +166,11 @@ def filter_trips(
 
 def summarize_trips(trips: Iterable[dict]) -> dict:
     trip_list = list(trips)
-    completed = [trip for trip in trip_list if trip["trip_status"] == "completed"]
+    completed = [trip for trip in trip_list if trip.get("trip_status") == "completed"]
     durations = [
-        float(trip["duration_minutes"])
+        duration
         for trip in completed
-        if trip.get("duration_minutes") != ""
+        if (duration := numeric_duration(trip.get("duration_minutes"))) is not None
     ]
     tonnage_by_material: dict[str, float] = defaultdict(float)
     tonnage_by_route: dict[str, float] = defaultdict(float)
@@ -177,14 +184,14 @@ def summarize_trips(trips: Iterable[dict]) -> dict:
     return {
         "total_trips": len(trip_list),
         "completed_trips": len(completed),
-        "open_trips": sum(1 for trip in trip_list if trip["trip_status"] == "open"),
-        "missing_out_trips": sum(1 for trip in trip_list if trip["trip_status"] == "missing_out"),
-        "orphan_out_trips": sum(1 for trip in trip_list if trip["trip_status"] == "orphan_out"),
+        "open_trips": sum(1 for trip in trip_list if trip.get("trip_status") == "open"),
+        "missing_out_trips": sum(1 for trip in trip_list if trip.get("trip_status") == "missing_out"),
+        "orphan_out_trips": sum(1 for trip in trip_list if trip.get("trip_status") == "orphan_out"),
         "total_completed_tonnage": round(sum(numeric_tons(trip.get("load_weight_tons")) for trip in completed), 2),
         "average_duration_minutes": round(sum(durations) / len(durations), 2) if durations else 0,
-        "by_status": dict(sorted(Counter(trip["trip_status"] for trip in trip_list).items())),
-        "by_material": dict(sorted(Counter(trip["material_type"] for trip in trip_list if trip["material_type"]).items())),
-        "by_route": dict(sorted(Counter(trip["route_id"] for trip in trip_list if trip["route_id"]).items())),
+        "by_status": dict(sorted(Counter(trip.get("trip_status", "") for trip in trip_list if trip.get("trip_status")).items())),
+        "by_material": dict(sorted(Counter(trip.get("material_type", "") for trip in trip_list if trip.get("material_type")).items())),
+        "by_route": dict(sorted(Counter(trip.get("route_id", "") for trip in trip_list if trip.get("route_id")).items())),
         "tonnage_by_material": {key: round(value, 2) for key, value in sorted(tonnage_by_material.items())},
         "tonnage_by_route": {key: round(value, 2) for key, value in sorted(tonnage_by_route.items())},
     }
@@ -215,13 +222,13 @@ def write_trips_html(trips: Iterable[dict], output_path: Path) -> Path:
     summary = summarize_trips(trip_list)
     rows = "\n".join(
         "<tr>"
-        f"<td>{escape(trip['trip_status'])}</td>"
-        f"<td>{escape(trip['vehicle_id'])}</td>"
-        f"<td>{escape(trip['driver_name'])}</td>"
-        f"<td>{escape(trip['material_type'])}</td>"
-        f"<td>{escape(trip['route_id'])}</td>"
-        f"<td>{escape(str(trip['duration_minutes']))}</td>"
-        f"<td>{escape(str(trip['load_weight_tons']))}</td>"
+        f"<td>{escape(str(trip.get('trip_status', '')))}</td>"
+        f"<td>{escape(str(trip.get('vehicle_id', '')))}</td>"
+        f"<td>{escape(str(trip.get('driver_name', '')))}</td>"
+        f"<td>{escape(str(trip.get('material_type', '')))}</td>"
+        f"<td>{escape(str(trip.get('route_id', '')))}</td>"
+        f"<td>{escape(str(trip.get('duration_minutes', '')))}</td>"
+        f"<td>{escape(str(trip.get('load_weight_tons', '')))}</td>"
         "</tr>"
         for trip in trip_list
     )

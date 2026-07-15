@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 
+import pytest
 from mining_qr_scanner.mining_events import MiningEventStore, build_scan_event, parse_vehicle_payload
 from mining_qr_scanner.payloads import build_qr_payload
 
@@ -98,6 +100,22 @@ def test_rebuild_vehicle_state_uses_last_accepted_event_only(tmp_path) -> None:
     rebuilt = store.rebuild_vehicle_state()
 
     assert rebuilt["TRUCK-001"]["current_status"] == "outside"
+
+
+def test_write_json_removes_temp_file_when_replace_fails(tmp_path, monkeypatch) -> None:
+    original_replace = Path.replace
+
+    def fail_replace(self, target):
+        if self.name.startswith(".events.json."):
+            raise PermissionError("blocked replace")
+        return original_replace(self, target)
+
+    monkeypatch.setattr(Path, "replace", fail_replace)
+
+    with pytest.raises(PermissionError):
+        MiningEventStore._write_json(tmp_path / "events.json", [{"event_id": "evt-1"}])
+
+    assert list(tmp_path.glob(".events.json.*.tmp")) == []
 
 
 def test_parse_vehicle_payload_rejects_checksum_tampering() -> None:

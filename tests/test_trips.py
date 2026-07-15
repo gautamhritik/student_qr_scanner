@@ -85,6 +85,21 @@ def test_filter_and_summarize_trips() -> None:
     assert summary["tonnage_by_material"]["iron_ore"] == 34.5
 
 
+def test_summarize_trips_ignores_invalid_duration_values() -> None:
+    trips = reconstruct_trips(
+        [
+            event(event_id="in-1"),
+            event(event_id="out-1", direction="out", scanned_at="2026-07-10T09:30:00+05:30"),
+        ]
+    )
+    trips[0]["duration_minutes"] = "not-a-number"
+
+    summary = summarize_trips(trips)
+
+    assert summary["completed_trips"] == 1
+    assert summary["average_duration_minutes"] == 0
+
+
 def test_export_trips_writes_csv_json_and_html(tmp_path) -> None:
     db = tmp_path / "db"
     db.mkdir()
