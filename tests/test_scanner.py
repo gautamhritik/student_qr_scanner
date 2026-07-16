@@ -72,3 +72,19 @@ def test_estimate_distance_readiness_messages() -> None:
     assert LightingAdaptiveQRScanner.estimate_distance_readiness(large_points, frame) == (
         "QR size in frame looks good."
     )
+
+
+def test_estimate_distance_readiness_ignores_incomplete_points() -> None:
+    frame = np.zeros((1000, 1200, 3), dtype=np.uint8)
+    incomplete_points = np.array([[[0, 0], [50, 0], [50, 50]]], dtype=np.float32)
+
+    assert LightingAdaptiveQRScanner.estimate_distance_readiness(incomplete_points, frame) == ""
+
+
+def test_draw_detection_ignores_incomplete_points() -> None:
+    frame = np.zeros((100, 120, 3), dtype=np.uint8)
+    incomplete_points = np.array([[[0, 0], [50, 0], [50, 50]]], dtype=np.float32)
+
+    LightingAdaptiveQRScanner.draw_detection(frame, incomplete_points, "test")
+
+    assert np.count_nonzero(frame) == 0

@@ -83,9 +83,8 @@ def accepted_payload_from_votes(recent_payloads, payload: str, vote_window: int,
         return payload
     if len(recent_payloads) < min_votes:
         return None
-    value, count = Counter(recent_payloads).most_common(1)[0]
-    if count >= min_votes:
-        return value
+    if Counter(recent_payloads)[payload] >= min_votes:
+        return payload
     return None
 
 
@@ -336,6 +335,7 @@ def main() -> None:
                     anpr_plate_number=args.anpr_plate_number,
                 )
                 record = mining_store.save_event(event)
+                recent_payloads.clear()
                 if can_log:
                     print(f"\nDetected with {method}:")
                     print(format_payload(accepted_payload))

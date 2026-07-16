@@ -87,6 +87,12 @@ def test_accepted_payload_from_votes_waits_for_majority() -> None:
     assert scan_camera.accepted_payload_from_votes(recent, "A", 3, 2) == "A"
 
 
+def test_accepted_payload_from_votes_does_not_accept_stale_majority() -> None:
+    recent = scan_camera.deque(["A", "A"], maxlen=3)
+
+    assert scan_camera.accepted_payload_from_votes(recent, "B", 3, 2) is None
+
+
 def test_accepted_payload_from_votes_accepts_immediately_when_disabled() -> None:
     recent = scan_camera.deque(maxlen=1)
 

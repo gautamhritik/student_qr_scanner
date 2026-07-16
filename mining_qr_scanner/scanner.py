@@ -180,6 +180,8 @@ class LightingAdaptiveQRScanner:
     @staticmethod
     def draw_detection(frame: np.ndarray, points: np.ndarray, method: str) -> None:
         pts = points.astype(int).reshape(-1, 2)
+        if len(pts) < 4:
+            return
         for i in range(len(pts)):
             cv2.line(frame, tuple(pts[i]), tuple(pts[(i + 1) % len(pts)]), (0, 255, 0), 3)
         cv2.putText(
@@ -199,6 +201,8 @@ class LightingAdaptiveQRScanner:
             return ""
 
         pts = points.reshape(-1, 2)
+        if len(pts) < 4:
+            return ""
         side_lengths = [
             np.linalg.norm(pts[i] - pts[(i + 1) % len(pts)]) for i in range(len(pts))
         ]
