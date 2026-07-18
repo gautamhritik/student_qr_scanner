@@ -152,6 +152,7 @@ def save_fleet(registry_path: Path, fleet: list[dict]) -> Path:
     normalized = [normalize_vehicle(vehicle) for vehicle in fleet]
     registry_path.parent.mkdir(parents=True, exist_ok=True)
     content = json.dumps(normalized, ensure_ascii=False, indent=2)
+    temp_path = None
     with NamedTemporaryFile(
         "w",
         delete=False,
@@ -162,7 +163,11 @@ def save_fleet(registry_path: Path, fleet: list[dict]) -> Path:
     ) as temp_file:
         temp_file.write(content)
         temp_path = Path(temp_file.name)
-    temp_path.replace(registry_path)
+    try:
+        temp_path.replace(registry_path)
+    finally:
+        if temp_path.exists():
+            temp_path.unlink()
     return registry_path
 
 

@@ -64,3 +64,15 @@ def test_write_audit_outputs(tmp_path) -> None:
     assert write_audit_json(report, tmp_path / "audit.json").exists()
     assert write_audit_csv(report, tmp_path / "audit.csv").exists()
     assert write_audit_html(report, tmp_path / "audit.html").exists()
+
+
+def test_write_audit_html_tolerates_partial_issue_rows(tmp_path) -> None:
+    report = {
+        "total_events": 1,
+        "total_issues": 1,
+        "issues": [{"severity": "low", "message": "partial issue"}],
+    }
+
+    output = write_audit_html(report, tmp_path / "audit.html")
+
+    assert "partial issue" in output.read_text(encoding="utf-8")

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from mining_qr_scanner.gate_registry import (
     add_gate,
     load_gates,
     remove_gate,
+    save_gates,
     validate_scanner_assignment,
 )
 
@@ -91,3 +94,19 @@ def test_remove_gate_deletes_matching_camera(tmp_path) -> None:
 
     assert removed["gate_id"] == "north-gate"
     assert all(item["gate_id"] != "north-gate" for item in load_gates(registry))
+
+
+def test_save_gates_removes_temp_file_when_replace_fails(tmp_path, monkeypatch) -> None:
+    original_replace = Path.replace
+
+    def fail_replace(self, target):
+        if self.name.startswith(".gates.json."):
+            raise PermissionError("blocked replace")
+        return original_replace(self, target)
+
+    monkeypatch.setattr(Path, "replace", fail_replace)
+
+    with pytest.raises(PermissionError):
+        save_gates(tmp_path / "gates.json", [gate()])
+
+    assert list(tmp_path.glob(".gates.json.*.tmp")) == []

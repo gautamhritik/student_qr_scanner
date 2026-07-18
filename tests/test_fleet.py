@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
-from mining_qr_scanner.fleet import add_vehicle, load_fleet, remove_vehicle
+from mining_qr_scanner.fleet import add_vehicle, load_fleet, remove_vehicle, save_fleet
 
 
 def vehicle(**overrides) -> dict:
@@ -67,3 +69,19 @@ def test_remove_vehicle_deletes_matching_record(tmp_path) -> None:
 
     assert removed["vehicle_id"] == "TRUCK-200"
     assert all(item["vehicle_id"] != "TRUCK-200" for item in load_fleet(registry))
+
+
+def test_save_fleet_removes_temp_file_when_replace_fails(tmp_path, monkeypatch) -> None:
+    original_replace = Path.replace
+
+    def fail_replace(self, target):
+        if self.name.startswith(".fleet.json."):
+            raise PermissionError("blocked replace")
+        return original_replace(self, target)
+
+    monkeypatch.setattr(Path, "replace", fail_replace)
+
+    with pytest.raises(PermissionError):
+        save_fleet(tmp_path / "fleet.json", [vehicle()])
+
+    assert list(tmp_path.glob(".fleet.json.*.tmp")) == []

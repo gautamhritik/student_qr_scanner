@@ -154,13 +154,13 @@ def write_audit_html(report: dict, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     rows = "\n".join(
         "<tr>"
-        f"<td>{escape(row['severity'])}</td>"
-        f"<td>{escape(row['issue_type'])}</td>"
-        f"<td>{escape(row['vehicle_id'])}</td>"
-        f"<td>{escape(row['scanned_at'])}</td>"
-        f"<td>{escape(row['gate_id'])}</td>"
-        f"<td>{escape(row['direction'])}</td>"
-        f"<td>{escape(row['message'])}</td>"
+        f"<td>{escape(str(row.get('severity', '')))}</td>"
+        f"<td>{escape(str(row.get('issue_type', '')))}</td>"
+        f"<td>{escape(str(row.get('vehicle_id', '')))}</td>"
+        f"<td>{escape(str(row.get('scanned_at', '')))}</td>"
+        f"<td>{escape(str(row.get('gate_id', '')))}</td>"
+        f"<td>{escape(str(row.get('direction', '')))}</td>"
+        f"<td>{escape(str(row.get('message', '')))}</td>"
         "</tr>"
         for row in report["issues"]
     )

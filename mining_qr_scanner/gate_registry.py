@@ -117,6 +117,7 @@ def save_gates(registry_path: Path, gates: list[dict]) -> Path:
     normalized = [normalize_gate(gate) for gate in gates]
     registry_path.parent.mkdir(parents=True, exist_ok=True)
     content = json.dumps(normalized, ensure_ascii=False, indent=2)
+    temp_path = None
     with NamedTemporaryFile(
         "w",
         delete=False,
@@ -127,7 +128,11 @@ def save_gates(registry_path: Path, gates: list[dict]) -> Path:
     ) as temp_file:
         temp_file.write(content)
         temp_path = Path(temp_file.name)
-    temp_path.replace(registry_path)
+    try:
+        temp_path.replace(registry_path)
+    finally:
+        if temp_path.exists():
+            temp_path.unlink()
     return registry_path
 
 
